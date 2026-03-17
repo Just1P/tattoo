@@ -4,6 +4,9 @@ CREATE TYPE "UserRole" AS ENUM ('client', 'artist', 'admin');
 -- CreateEnum
 CREATE TYPE "VerificationStatus" AS ENUM ('pending', 'approved', 'rejected');
 
+-- CreateEnum
+CREATE TYPE "BookingStatus" AS ENUM ('pending', 'confirmed', 'cancelled');
+
 -- CreateTable
 CREATE TABLE "user" (
     "id" TEXT NOT NULL,
@@ -106,12 +109,11 @@ CREATE TABLE "FavoriteTattoo" (
 CREATE TABLE "Booking" (
     "id" TEXT NOT NULL,
     "artistId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "calEventId" TEXT,
-    "clientName" TEXT NOT NULL,
-    "clientEmail" TEXT NOT NULL,
     "startAt" TIMESTAMP(3) NOT NULL,
     "endAt" TIMESTAMP(3) NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'pending',
+    "status" "BookingStatus" NOT NULL DEFAULT 'pending',
     "notes" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -205,6 +207,9 @@ ALTER TABLE "FavoriteTattoo" ADD CONSTRAINT "FavoriteTattoo_tattooId_fkey" FOREI
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "TattooArtist"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Booking" ADD CONSTRAINT "Booking_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "ConversationParticipant" ADD CONSTRAINT "ConversationParticipant_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -212,3 +217,6 @@ ALTER TABLE "ConversationParticipant" ADD CONSTRAINT "ConversationParticipant_us
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
