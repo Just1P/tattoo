@@ -1,0 +1,212 @@
+// Prisma Schema — Tattoo Pro
+// Session et Account sont gérés par Better Auth (npx better-auth generate)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  client
+  artist
+  admin
+}
+
+enum VerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
+// ─────────────────────────────────────────────
+// Modèles
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  firstName     String?
+  lastName      String?
+  name          String?
+  role          UserRole  @default(client)
+  avatarUrl     String?
+  description   String?
+  image         String?
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  artistProfile    TattooArtist?
+  followedArtists  ArtistFollower[]
+  favoriteTattoos  FavoriteTattoo[]
+  conversations    ConversationParticipant[]
+  bookings         Booking[]
+  sentMessages     Message[]
+
+  // Session & Account gérés par Better Auth
+  @@map("user")
+}
+
+model TattooArtist {
+  id             String             @id @default(uuid())
+  userId         String             @unique
+  artistName     String?
+  bio            String?
+  city           String?
+  location       String?
+  siret          String?
+  priceMin       Int?
+  priceMax       Int?
+  followersCount Int                @default(0)
+  verified       VerificationStatus @default(pending)
+  instagramUrl   String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  // Relations
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tattoos       Tattoo[]
+  artistStyles  ArtistStyle[]
+  followers     ArtistFollower[]
+  bookings      Booking[]
+}
+
+model Tattoo {
+  id          String   @id @default(uuid())
+  artistId    String
+  styleId     String
+  title       String?
+  description String?
+  imageUrl    String   @db.VarChar(500)
+  position    Int      @default(0)
+  pinned      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  artist      TattooArtist     @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  style       Style            @relation(fields: [styleId], references: [id])
+  favoritedBy FavoriteTattoo[]
+}
+
+model Style {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tattoos      Tattoo[]
+  artistStyles ArtistStyle[]
+}
+
+model ArtistStyle {
+  id        String   @id @default(uuid())
+  artistId  String
+  styleId   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  artist TattooArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  style  Style        @relation(fields: [styleId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, styleId])
+}
+
+model ArtistFollower {
+  id        String   @id @default(uuid())
+  artistId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  artist TattooArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, userId])
+}
+
+model FavoriteTattoo {
+  id        String   @id @default(uuid())
+  userId    String
+  tattooId  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tattoo Tattoo @relation(fields: [tattooId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tattooId])
+}
+
+model Booking {
+  id         String   @id @default(uuid())
+  artistId   String
+  userId     String
+  calEventId String?  @unique // ID de l'événement Cal.com (sync webhook)
+  startAt    DateTime
+  endAt      DateTime
+  status     BookingStatus @default(pending)
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  artist TattooArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String   @id @default(uuid())
+  conversationId String
+  userId         String
+  createdAt      DateTime @default(now())
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
