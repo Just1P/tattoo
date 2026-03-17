@@ -37,29 +37,32 @@ enum BookingStatus {
 // ─────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
+  id            String   @id @default(uuid())
+  email         String   @unique
   passwordHash  String?
   firstName     String?
   lastName      String?
   name          String?
-  role          UserRole  @default(client)
+  role          UserRole @default(client)
   avatarUrl     String?
   description   String?
   image         String?
-  emailVerified Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
-  artistProfile    TattooArtist?
-  followedArtists  ArtistFollower[]
-  favoriteTattoos  FavoriteTattoo[]
-  conversations    ConversationParticipant[]
-  bookings         Booking[]
-  sentMessages     Message[]
+  artistProfile   TattooArtist?
+  followedArtists ArtistFollower[]
+  favoriteTattoos FavoriteTattoo[]
+  conversations   ConversationParticipant[]
+  bookings        Booking[]
+  sentMessages    Message[]
 
   // Session & Account gérés par Better Auth
+  sessions Session[]
+  accounts Account[]
+
   @@map("user")
 }
 
@@ -80,11 +83,11 @@ model TattooArtist {
   updatedAt      DateTime           @updatedAt
 
   // Relations
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tattoos       Tattoo[]
-  artistStyles  ArtistStyle[]
-  followers     ArtistFollower[]
-  bookings      Booking[]
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tattoos      Tattoo[]
+  artistStyles ArtistStyle[]
+  followers    ArtistFollower[]
+  bookings     Booking[]
 }
 
 model Tattoo {
@@ -159,16 +162,16 @@ model FavoriteTattoo {
 }
 
 model Booking {
-  id         String   @id @default(uuid())
+  id         String        @id @default(uuid())
   artistId   String
   userId     String
-  calEventId String?  @unique // ID de l'événement Cal.com (sync webhook)
+  calEventId String?       @unique
   startAt    DateTime
   endAt      DateTime
   status     BookingStatus @default(pending)
   notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
 
   // Relations
   artist TattooArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
@@ -199,7 +202,7 @@ model ConversationParticipant {
 }
 
 model Message {
-  id             String   @id @default(uuid())
+  id             String    @id @default(uuid())
   conversationId String
   senderId       String
   content        String
@@ -209,4 +212,52 @@ model Message {
   // Relations
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }
