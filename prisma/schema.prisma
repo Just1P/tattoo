@@ -26,6 +26,12 @@ enum VerificationStatus {
   rejected
 }
 
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
 // ─────────────────────────────────────────────
 // Modèles
 // ─────────────────────────────────────────────
@@ -51,6 +57,7 @@ model User {
   favoriteTattoos  FavoriteTattoo[]
   conversations    ConversationParticipant[]
   bookings         Booking[]
+  sentMessages     Message[]
 
   // Session & Account gérés par Better Auth
   @@map("user")
@@ -158,7 +165,7 @@ model Booking {
   calEventId String?  @unique // ID de l'événement Cal.com (sync webhook)
   startAt    DateTime
   endAt      DateTime
-  status     String   @default("pending") // pending | confirmed | cancelled
+  status     BookingStatus @default(pending)
   notes      String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -201,4 +208,5 @@ model Message {
 
   // Relations
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }

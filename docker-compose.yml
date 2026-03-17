@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: tattoo_pro
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   adminer:
     image: adminer:latest
@@ -19,3 +21,6 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: postgres
       ADMINER_DESIGN: pepa-linha
+
+volumes:
+  postgres_data:
