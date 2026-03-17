@@ -50,6 +50,7 @@ model User {
   followedArtists  ArtistFollower[]
   favoriteTattoos  FavoriteTattoo[]
   conversations    ConversationParticipant[]
+  bookings         Booking[]
 
   // Session & Account gérés par Better Auth
   @@map("user")
@@ -151,20 +152,20 @@ model FavoriteTattoo {
 }
 
 model Booking {
-  id          String   @id @default(uuid())
-  artistId    String
-  calEventId  String?  @unique // ID de l'événement Cal.com (sync webhook)
-  clientName  String
-  clientEmail String
-  startAt     DateTime
-  endAt       DateTime
-  status      String   @default("pending") // pending | confirmed | cancelled
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  artistId   String
+  userId     String
+  calEventId String?  @unique // ID de l'événement Cal.com (sync webhook)
+  startAt    DateTime
+  endAt      DateTime
+  status     String   @default("pending") // pending | confirmed | cancelled
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
   artist TattooArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Conversation {
