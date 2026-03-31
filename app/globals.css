@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
 @font-face {
   font-family: "Jaguar";
   src: url("/fonts/Jaguar.otf") format("opentype");
