@@ -91,25 +91,29 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
     if (!validateStep()) return;
     setIsSubmitting(true);
 
-    const res = await fetch("/api/artist/onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...formData,
-        priceMin: formData.priceMin ? parseInt(formData.priceMin) : undefined,
-        priceMax: formData.priceMax ? parseInt(formData.priceMax) : undefined,
-      }),
-    });
+    try {
+      const res = await fetch("/api/artist/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          priceMin: formData.priceMin ? parseInt(formData.priceMin) : undefined,
+          priceMax: formData.priceMax ? parseInt(formData.priceMax) : undefined,
+        }),
+      });
 
-    setIsSubmitting(false);
+      if (!res.ok) {
+        toast.error("Une erreur est survenue. Veuillez réessayer.");
+        return;
+      }
 
-    if (!res.ok) {
+      toast.success("Profil créé avec succès !");
+      router.push("/dashboard");
+    } catch {
       toast.error("Une erreur est survenue. Veuillez réessayer.");
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    toast.success("Profil créé avec succès !");
-    router.push("/dashboard");
   }
 
   const progressPercent = Math.round((step / TOTAL_STEPS) * 100);
@@ -262,7 +266,8 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
                       key={style.id}
                       type="button"
                       onClick={() => toggleStyle(style.id)}
-                      className="cursor-pointer"
+                      aria-pressed={selected}
+                      className="cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <Badge
                         variant={selected ? "default" : "outline"}

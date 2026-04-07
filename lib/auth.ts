@@ -32,12 +32,11 @@ export const auth = betterAuth({
       create: {
         after: async (user) => {
           if ((user as { role?: string }).role !== "artist") return;
-          const existing = await prisma.tattooArtist.findUnique({
+          await prisma.tattooArtist.upsert({
             where: { userId: user.id },
+            update: {},
+            create: { userId: user.id },
           });
-          if (!existing) {
-            await prisma.tattooArtist.create({ data: { userId: user.id } });
-          }
         },
       },
     },

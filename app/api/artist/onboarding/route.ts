@@ -5,12 +5,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const onboardingSchema = z.object({
-  artistName: z.string().min(1, "Le nom artistique est requis"),
-  bio: z.string().optional(),
-  city: z.string().min(1, "La ville est requise"),
-  location: z.string().optional(),
+  artistName: z.string().trim().min(1, "Le nom artistique est requis"),
+  bio: z.string().trim().optional(),
+  city: z.string().trim().min(1, "La ville est requise"),
+  location: z.string().trim().optional(),
   siret: z
     .string()
+    .trim()
     .regex(/^\d{14}$/, "Le SIRET doit contenir exactement 14 chiffres"),
   priceMin: z.number().int().min(0).optional(),
   priceMax: z.number().int().min(0).optional(),
@@ -28,7 +29,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
   }
 
-  const body = await req.json();
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Corps de requête JSON invalide" },
+      { status: 400 },
+    );
+  }
   const parsed = onboardingSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -39,16 +48,20 @@ export async function POST(req: NextRequest) {
   }
 
   const { styleIds, ...artistData } = parsed.data;
+  const uniqueStyleIds = [...new Set(styleIds)];
 
-  const artist = await prisma.tattooArtist.upsert({
-    where: { userId: session.user.id },
-    update: artistData,
-    create: { userId: session.user.id, ...artistData },
-  });
+  await prisma.$transaction(async (tx) => {
+    const artist = await tx.tattooArtist.upsert({
+      where: { userId: session.user.id },
+      update: artistData,
+      create: { userId: session.user.id, ...artistData },
+    });
 
-  await prisma.artistStyle.deleteMany({ where: { artistId: artist.id } });
-  await prisma.artistStyle.createMany({
-    data: styleIds.map((styleId) => ({ artistId: artist.id, styleId })),
+    await tx.artistStyle.deleteMany({ where: { artistId: artist.id } });
+    await tx.artistStyle.createMany({
+      data: uniqueStyleIds.map((styleId) => ({ artistId: artist.id, styleId })),
+      skipDuplicates: true,
+    });
   });
 
   return NextResponse.json({ success: true });
