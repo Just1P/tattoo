@@ -77,7 +77,7 @@ export function RegisterForm() {
     }
 
     toast.success("Compte créé avec succès !");
-    router.push("/");
+    router.push(values.role === "artist" ? "/onboarding" : "/");
   }
 
   return (
