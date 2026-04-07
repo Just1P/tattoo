@@ -1,16 +1,25 @@
 "use client";
 
-import { useSession } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const { data: session } = useSession();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await signOut();
+    router.push("/login");
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -36,6 +45,13 @@ export default function Home() {
             <p className="text-muted-foreground">Aucune session active.</p>
           )}
         </CardContent>
+        {session?.user && (
+          <CardFooter>
+            <Button variant="destructive" className="w-full" onClick={handleSignOut}>
+              Se déconnecter
+            </Button>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );
