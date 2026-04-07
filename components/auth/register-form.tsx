@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -16,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import Typography from "@/components/custom/Typography";
 import { signUp } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 
@@ -27,6 +29,7 @@ const registerSchema = z
       .string()
       .min(8, "Le mot de passe doit contenir au moins 8 caractères."),
     confirmPassword: z.string(),
+    role: z.enum(["client", "artist"]),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Les mots de passe ne correspondent pas.",
@@ -37,21 +40,35 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const router = useRouter();
+  const [role, setRole] = useState<"client" | "artist">("client");
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "client",
+    },
   });
+
+  function toggleRole(value: "client" | "artist") {
+    setRole(value);
+    setValue("role", value);
+  }
 
   async function onSubmit(values: RegisterValues) {
     const { error } = await signUp.email({
       name: values.name,
       email: values.email,
       password: values.password,
+      role: values.role,
     });
 
     if (error) {
@@ -66,13 +83,34 @@ export function RegisterForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Créer un compte</CardTitle>
+        <CardTitle>
+          <Typography tag="h3">Créer un compte</Typography>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="flex gap-1 rounded-lg border">
+            <Button
+              type="button"
+              variant={role === "client" ? "default" : "ghost"}
+              className="flex-1"
+              onClick={() => toggleRole("client")}
+            >
+              Client
+            </Button>
+            <Button
+              type="button"
+              variant={role === "artist" ? "default" : "ghost"}
+              className="flex-1"
+              onClick={() => toggleRole("artist")}
+            >
+              Tatoueur
+            </Button>
+          </div>
+
           <div className="space-y-1">
-            <label htmlFor="name" className="text-sm font-medium">
-              Nom
+            <label htmlFor="name">
+              <Typography tag="p" weight="medium">Nom</Typography>
             </label>
             <Input
               id="name"
@@ -81,12 +119,14 @@ export function RegisterForm() {
               {...register("name")}
             />
             {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
+              <Typography tag="p" color="destructive">
+                {errors.name.message}
+              </Typography>
             )}
           </div>
           <div className="space-y-1">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
+            <label htmlFor="email">
+              <Typography tag="p" weight="medium">Email</Typography>
             </label>
             <Input
               id="email"
@@ -96,12 +136,14 @@ export function RegisterForm() {
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <Typography tag="p" color="destructive">
+                {errors.email.message}
+              </Typography>
             )}
           </div>
           <div className="space-y-1">
-            <label htmlFor="password" className="text-sm font-medium">
-              Mot de passe
+            <label htmlFor="password">
+              <Typography tag="p" weight="medium">Mot de passe</Typography>
             </label>
             <Input
               id="password"
@@ -111,14 +153,14 @@ export function RegisterForm() {
               {...register("password")}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">
+              <Typography tag="p" color="destructive">
                 {errors.password.message}
-              </p>
+              </Typography>
             )}
           </div>
           <div className="space-y-1">
-            <label htmlFor="confirmPassword" className="text-sm font-medium">
-              Confirmer le mot de passe
+            <label htmlFor="confirmPassword">
+              <Typography tag="p" weight="medium">Confirmer le mot de passe</Typography>
             </label>
             <Input
               id="confirmPassword"
@@ -128,9 +170,9 @@ export function RegisterForm() {
               {...register("confirmPassword")}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-destructive">
+              <Typography tag="p" color="destructive">
                 {errors.confirmPassword.message}
-              </p>
+              </Typography>
             )}
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -138,10 +180,10 @@ export function RegisterForm() {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="justify-center text-sm">
-        <span className="text-muted-foreground">Déjà un compte ?&nbsp;</span>
-        <Link href="/login" className="text-primary hover:underline">
-          Se connecter
+      <CardFooter className="justify-center">
+        <Typography tag="span" color="muted">Déjà un compte ?&nbsp;</Typography>
+        <Link href="/login">
+          <Typography tag="span" color="primary" underline>Se connecter</Typography>
         </Link>
       </CardFooter>
     </Card>

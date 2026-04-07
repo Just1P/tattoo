@@ -11,11 +11,14 @@ type FontWeightsType = keyof typeof variants.weight;
 
 export type FontAlignType = keyof typeof variants.align;
 
+type FontSizeType = keyof typeof variants.size;
+
 export type TypographyProps = {
   children?: ReactNode;
   label?: string;
   tag: FontTagsType;
   style?: FontTagsType;
+  size?: FontSizeType;
   color?: FontColorsType;
   font?: FontFamiliesType;
   weight?: FontWeightsType;
