@@ -69,17 +69,17 @@ export default function Home() {
             </Typography>
           )}
         </CardContent>
-        {session?.user && (
-          <CardFooter>
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={handleSignOut}
-            >
+        <CardFooter>
+          {session?.user ? (
+            <Button variant="destructive" className="w-full" onClick={handleSignOut}>
               Se déconnecter
             </Button>
-          </CardFooter>
-        )}
+          ) : (
+            <Button className="w-full" onClick={() => router.push("/login")}>
+              Se connecter
+            </Button>
+          )}
+        </CardFooter>
       </Card>
     </div>
   );

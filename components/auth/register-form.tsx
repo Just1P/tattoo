@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import Typography from "@/components/custom/Typography";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +18,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import Typography from "@/components/custom/Typography";
 import { signUp } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 
@@ -89,7 +89,7 @@ export function RegisterForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="flex gap-1 rounded-lg border">
+          <div className="flex gap-1 rounded-lg">
             <Button
               type="button"
               variant={role === "client" ? "default" : "ghost"}
@@ -110,7 +110,9 @@ export function RegisterForm() {
 
           <div className="space-y-1">
             <label htmlFor="name">
-              <Typography tag="p" weight="medium">Nom</Typography>
+              <Typography tag="p" weight="medium">
+                Nom
+              </Typography>
             </label>
             <Input
               id="name"
@@ -126,7 +128,9 @@ export function RegisterForm() {
           </div>
           <div className="space-y-1">
             <label htmlFor="email">
-              <Typography tag="p" weight="medium">Email</Typography>
+              <Typography tag="p" weight="medium">
+                Email
+              </Typography>
             </label>
             <Input
               id="email"
@@ -143,7 +147,9 @@ export function RegisterForm() {
           </div>
           <div className="space-y-1">
             <label htmlFor="password">
-              <Typography tag="p" weight="medium">Mot de passe</Typography>
+              <Typography tag="p" weight="medium">
+                Mot de passe
+              </Typography>
             </label>
             <Input
               id="password"
@@ -160,7 +166,9 @@ export function RegisterForm() {
           </div>
           <div className="space-y-1">
             <label htmlFor="confirmPassword">
-              <Typography tag="p" weight="medium">Confirmer le mot de passe</Typography>
+              <Typography tag="p" weight="medium">
+                Confirmer le mot de passe
+              </Typography>
             </label>
             <Input
               id="confirmPassword"
@@ -181,9 +189,13 @@ export function RegisterForm() {
         </form>
       </CardContent>
       <CardFooter className="justify-center">
-        <Typography tag="span" color="muted">Déjà un compte ?&nbsp;</Typography>
+        <Typography tag="span" color="muted">
+          Déjà un compte ?&nbsp;
+        </Typography>
         <Link href="/login">
-          <Typography tag="span" color="primary" underline>Se connecter</Typography>
+          <Typography tag="span" color="primary" underline>
+            Se connecter
+          </Typography>
         </Link>
       </CardFooter>
     </Card>
