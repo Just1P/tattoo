@@ -1,10 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "./generated/prisma/client";
-
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter });
+import { prisma } from "./prisma";
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
@@ -28,6 +24,20 @@ export const auth = betterAuth({
         required: false,
         defaultValue: "client",
         input: true,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          if ((user as { role?: string }).role !== "artist") return;
+          await prisma.tattooArtist.upsert({
+            where: { userId: user.id },
+            update: {},
+            create: { userId: user.id },
+          });
+        },
       },
     },
   },
