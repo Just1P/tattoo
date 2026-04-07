@@ -7,8 +7,8 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-screen bg-background">
-      <div className="hidden lg:flex lg:w-1/2 relative p-6">
-        <div className="relative w-full h-full rounded-(--radius-4xl) overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative">
+        <div className="relative w-full h-full  overflow-hidden">
           <Image
             src="/auth/auth-img.jpg"
             alt="Tattoo art"

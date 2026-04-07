@@ -27,6 +27,15 @@
 
 @theme {
   --radius-4xl: 0.5rem;
+  --ease-smooth: cubic-bezier(0.3, 0, 0.3, 1);
+}
+
+@layer utilities {
+  .transition-smooth {
+    transition-property: all;
+    transition-duration: 300ms;
+    transition-timing-function: var(--ease-smooth);
+  }
 }
 
 @theme inline {
