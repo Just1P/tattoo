@@ -1,7 +1,7 @@
 "use client";
 
-import { useSession, signOut } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import Typography from "@/components/custom/Typography";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,7 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { signOut, useSession } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -25,29 +26,56 @@ export default function Home() {
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Mon compte</CardTitle>
-          <CardDescription>Informations de la session active</CardDescription>
+          <CardTitle>
+            <Typography tag="h2">Mon compte</Typography>
+          </CardTitle>
+          <CardDescription>
+            <Typography tag="p" color="muted">
+              Informations de la session active
+            </Typography>
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+        <CardContent className="space-y-2">
           {session?.user ? (
             <>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Nom</span>
-                <span className="font-medium">{session.user.name}</span>
+                <Typography tag="p" color="muted">
+                  Nom
+                </Typography>
+                <Typography tag="p" weight="medium">
+                  {session.user.name}
+                </Typography>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Email</span>
-                <span className="font-medium">{session.user.email}</span>
+                <Typography tag="p" color="muted">
+                  Email
+                </Typography>
+                <Typography tag="p" weight="medium">
+                  {session.user.email}
+                </Typography>
               </div>
-
+              <div className="flex justify-between">
+                <Typography tag="p" color="muted">
+                  Rôle
+                </Typography>
+                <Typography tag="p" weight="medium">
+                  {session.user.role === "artist" ? "Tatoueur" : "Client"}
+                </Typography>
+              </div>
             </>
           ) : (
-            <p className="text-muted-foreground">Aucune session active.</p>
+            <Typography tag="p" color="muted">
+              Aucune session active.
+            </Typography>
           )}
         </CardContent>
         {session?.user && (
           <CardFooter>
-            <Button variant="destructive" className="w-full" onClick={handleSignOut}>
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={handleSignOut}
+            >
               Se déconnecter
             </Button>
           </CardFooter>

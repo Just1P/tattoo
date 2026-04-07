@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils";
 import type { TypographyProps } from "./types";
 import { variants } from "./utils/variants";
 
-const typographyVariants = cva("text-gray-900", {
+const typographyVariants = cva("", {
   variants,
   defaultVariants: {
     tag: "p",
-    color: "gray-900",
+    color: "foreground",
   },
 });
 
@@ -16,6 +16,7 @@ const Typography = ({
   label,
   tag,
   style,
+  size,
   font,
   weight,
   className,
@@ -37,6 +38,7 @@ const Typography = ({
       className={cn(
         typographyVariants({
           tag: style ?? tag,
+          size,
           color,
           font,
           weight,

@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import Typography from "@/components/custom/Typography";
 import { signIn } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 
@@ -56,13 +57,15 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Connexion</CardTitle>
+        <CardTitle>
+          <Typography tag="h3">Connexion</Typography>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
+            <label htmlFor="email">
+              <Typography tag="p" weight="medium">Email</Typography>
             </label>
             <Input
               id="email"
@@ -72,12 +75,14 @@ export function LoginForm() {
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <Typography tag="p" color="destructive">
+                {errors.email.message}
+              </Typography>
             )}
           </div>
           <div className="space-y-1">
-            <label htmlFor="password" className="text-sm font-medium">
-              Mot de passe
+            <label htmlFor="password">
+              <Typography tag="p" weight="medium">Mot de passe</Typography>
             </label>
             <Input
               id="password"
@@ -87,9 +92,9 @@ export function LoginForm() {
               {...register("password")}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">
+              <Typography tag="p" color="destructive">
                 {errors.password.message}
-              </p>
+              </Typography>
             )}
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -97,12 +102,10 @@ export function LoginForm() {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="justify-center text-sm">
-        <span className="text-muted-foreground">
-          Pas encore de compte ?&nbsp;
-        </span>
-        <Link href="/register" className="text-primary hover:underline">
-          S&apos;inscrire
+      <CardFooter className="justify-center">
+        <Typography tag="span" color="muted">Pas encore de compte ?&nbsp;</Typography>
+        <Link href="/register">
+          <Typography tag="span" color="primary" underline>S&apos;inscrire</Typography>
         </Link>
       </CardFooter>
     </Card>
