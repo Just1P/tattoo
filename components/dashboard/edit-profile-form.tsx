@@ -106,7 +106,6 @@ export function EditProfileForm({ initialData, styles }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Identité artistique */}
       <section className="space-y-4">
         <Typography tag="h3">Identité artistique</Typography>
         <div className="space-y-1">
@@ -151,7 +150,6 @@ export function EditProfileForm({ initialData, styles }: Props) {
         </div>
       </section>
 
-      {/* Localisation */}
       <section className="space-y-4">
         <Typography tag="h3">Localisation</Typography>
         <div className="space-y-1">
@@ -180,7 +178,6 @@ export function EditProfileForm({ initialData, styles }: Props) {
         </div>
       </section>
 
-      {/* Informations légales */}
       <section className="space-y-4">
         <Typography tag="h3">Informations légales</Typography>
         <div className="space-y-1">
@@ -204,7 +201,6 @@ export function EditProfileForm({ initialData, styles }: Props) {
         </div>
       </section>
 
-      {/* Tarifs */}
       <section className="space-y-4">
         <Typography tag="h3">Tarifs</Typography>
         <div className="flex gap-4">
@@ -233,7 +229,6 @@ export function EditProfileForm({ initialData, styles }: Props) {
         </div>
       </section>
 
-      {/* Styles */}
       <section className="space-y-4">
         <Typography tag="h3">Styles pratiqués</Typography>
         <div className="space-y-2">
