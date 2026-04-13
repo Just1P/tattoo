@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { OurFileRouter } from "@/lib/uploadthing";
+import type { OurFileRouter } from "@/lib/uploadthing";
 import { generateReactHelpers } from "@uploadthing/react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -48,9 +48,14 @@ export function UploadTattooForm({ styles }: Props) {
   });
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const input = e.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
-    await startUpload([file]);
+    try {
+      await startUpload([file]);
+    } finally {
+      input.value = "";
+    }
   }
 
   function validate(): boolean {
