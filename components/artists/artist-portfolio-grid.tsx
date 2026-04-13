@@ -26,10 +26,10 @@ export function ArtistPortfolioGrid({ tattoos }: { tattoos: Tattoo[] }) {
             src={tattoo.imageUrl}
             alt={tattoo.title ?? "Tatouage"}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-smooth transition-transform group-hover:scale-105"
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
           />
-          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-smooth transition-opacity group-hover:opacity-100">
             {tattoo.title && (
               <Typography tag="span" color="white" weight="semi-bold">
                 {tattoo.title}

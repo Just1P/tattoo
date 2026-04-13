@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { signOut, useSession } from "@/lib/auth-client";
-import { LayoutDashboard, LogIn, LogOut, Search, User } from "lucide-react";
+import { Images, LayoutDashboard, LogIn, LogOut, Search, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -33,6 +33,7 @@ export function AppSidebar() {
       ? [
           { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
           { label: "Mon profil", href: "/dashboard/profile", icon: User },
+          { label: "Portfolio", href: "/dashboard/portfolio", icon: Images },
         ]
       : []),
   ];

@@ -66,7 +66,7 @@ export function UploadTattooForm({ styles }: Props) {
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!validate()) return;
 
@@ -124,7 +124,7 @@ export function UploadTattooForm({ styles }: Props) {
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={isUploading}
-                className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/40 px-6 py-10 text-muted-foreground transition-colors hover:border-primary hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/40 px-6 py-10 text-muted-foreground transition-smooth transition-colors hover:border-primary hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isUploading ? (
                   <Typography tag="p">Envoi en cours...</Typography>
