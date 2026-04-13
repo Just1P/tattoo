@@ -8,7 +8,7 @@ import Typography from "@/components/custom/Typography";
 export const revalidate = 3600;
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 const publicWhere = { verified: "approved" as const };
@@ -37,7 +37,7 @@ async function getArtist(id: string) {
 }
 
 export default async function ArtistPublicPage({ params }: Props) {
-  const { id } = params;
+  const { id } = await params;
   const artist = await getArtist(id);
 
   if (!artist) notFound();
