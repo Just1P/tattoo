@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import Typography from "@/components/custom/Typography";
+import { formatHourlyRateRange } from "@/lib/format-price";
 
 type ArtistProfileHeaderProps = {
   artistName: string | null;
@@ -13,6 +14,16 @@ type ArtistProfileHeaderProps = {
   styles: { id: string; name: string }[];
 };
 
+function safeInstagramUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}
+
 export function ArtistProfileHeader({
   artistName,
   bio,
@@ -24,14 +35,8 @@ export function ArtistProfileHeader({
   verified,
   styles,
 }: ArtistProfileHeaderProps) {
-  const priceLabel =
-    priceMin !== null && priceMax !== null
-      ? `${priceMin} – ${priceMax} €/h`
-      : priceMin !== null
-        ? `À partir de ${priceMin} €/h`
-        : priceMax !== null
-          ? `Jusqu'à ${priceMax} €/h`
-          : null;
+  const priceLabel = formatHourlyRateRange(priceMin, priceMax);
+  const safeUrl = instagramUrl ? safeInstagramUrl(instagramUrl) : null;
 
   return (
     <div className="space-y-4">
@@ -62,9 +67,9 @@ export function ArtistProfileHeader({
             {priceLabel}
           </Typography>
         )}
-        {instagramUrl && (
+        {safeUrl && (
           <a
-            href={instagramUrl}
+            href={safeUrl}
             target="_blank"
             rel="noopener noreferrer"
           >

@@ -8,6 +8,7 @@ async function getArtists() {
   return prisma.tattooArtist.findMany({
     where: {
       artistName: { not: null },
+      verified: "approved",
     },
     include: {
       artistStyles: {

@@ -8,19 +8,22 @@ import Typography from "@/components/custom/Typography";
 export const revalidate = 3600; // revalidation toutes les heures
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 };
+
+const publicWhere = { verified: "approved" as const };
 
 export async function generateStaticParams() {
   const artists = await prisma.tattooArtist.findMany({
+    where: publicWhere,
     select: { id: true },
   });
   return artists.map((a) => ({ id: a.id }));
 }
 
 async function getArtist(id: string) {
-  return prisma.tattooArtist.findUnique({
-    where: { id },
+  return prisma.tattooArtist.findFirst({
+    where: { id, ...publicWhere },
     include: {
       tattoos: {
         orderBy: [{ pinned: "desc" }, { position: "asc" }],
@@ -34,7 +37,7 @@ async function getArtist(id: string) {
 }
 
 export default async function ArtistPublicPage({ params }: Props) {
-  const { id } = await params;
+  const { id } = params;
   const artist = await getArtist(id);
 
   if (!artist) notFound();

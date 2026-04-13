@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Typography from "@/components/custom/Typography";
+import { formatHourlyRateRange } from "@/lib/format-price";
 
 type ArtistCardProps = {
   id: string;
@@ -26,14 +27,7 @@ export function ArtistCard({
   styles,
   tattooCount,
 }: ArtistCardProps) {
-  const priceLabel =
-    priceMin !== null && priceMax !== null
-      ? `${priceMin} – ${priceMax} €/h`
-      : priceMin !== null
-        ? `À partir de ${priceMin} €/h`
-        : priceMax !== null
-          ? `Jusqu'à ${priceMax} €/h`
-          : null;
+  const priceLabel = formatHourlyRateRange(priceMin, priceMax);
 
   return (
     <Link href={`/artists/${id}`} className="group block">
