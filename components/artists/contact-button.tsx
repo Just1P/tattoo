@@ -13,7 +13,6 @@ export function ContactButton({ artistId }: { artistId: string }) {
       router.push("/login");
       return;
     }
-    // TODO TICKET-08 : créer/ouvrir la conversation avec cet artiste
     router.push(`/dashboard/messages?artistId=${encodeURIComponent(artistId)}`);
   }
 

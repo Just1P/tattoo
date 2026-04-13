@@ -5,7 +5,7 @@ import { ArtistPortfolioGrid } from "@/components/artists/artist-portfolio-grid"
 import { ContactButton } from "@/components/artists/contact-button";
 import Typography from "@/components/custom/Typography";
 
-export const revalidate = 3600; // revalidation toutes les heures
+export const revalidate = 3600;
 
 type Props = {
   params: { id: string };
