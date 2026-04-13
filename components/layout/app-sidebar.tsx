@@ -42,18 +42,11 @@ export function AppSidebar() {
       <SidebarHeader className="flex items-center justify-center py-4">
         <Link href="/">
           <Image
-            src="/logo/logo-white.png"
+            src="/logo/logo.png"
             alt="Logo"
             width={400}
             height={400}
-            className="hidden dark:block size-8"
-          />
-          <Image
-            src="/logo/logo-dark.png"
-            alt="Logo"
-            width={400}
-            height={400}
-            className="block dark:hidden size-8"
+            className="size-11"
           />
         </Link>
       </SidebarHeader>

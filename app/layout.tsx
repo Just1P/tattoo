@@ -1,6 +1,6 @@
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { Toaster } from "@/components/ui/sonner";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
@@ -19,14 +19,12 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className="antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="light">
           <TooltipProvider>
             <SidebarProvider defaultOpen={false}>
               <AppSidebar />
               <div className="flex flex-1 flex-col min-h-screen">
-                <main className="flex-1 px-8 pt-16 pb-16">
-                  {children}
-                </main>
+                <main className="flex-1 px-8 pt-16 pb-16">{children}</main>
               </div>
               <Toaster />
             </SidebarProvider>
