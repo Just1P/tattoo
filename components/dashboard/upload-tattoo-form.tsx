@@ -1,11 +1,12 @@
 "use client";
 
+import { FormField } from "@/components/form/form-field";
+import { StyleSelector } from "@/components/form/style-selector";
 import Typography from "@/components/custom/Typography";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
 import type { OurFileRouter } from "@/lib/uploadthing";
 import { generateReactHelpers } from "@uploadthing/react";
 import { useRouter } from "next/navigation";
@@ -19,6 +20,62 @@ type Style = { id: string; name: string };
 type Props = {
   styles: Style[];
 };
+
+const MAX_DIMENSION = 2400;
+const WEBP_QUALITY = 0.92;
+
+async function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas context unavailable"));
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Canvas toBlob failed"));
+            return;
+          }
+          const compressed = new File(
+            [blob],
+            file.name.replace(/\.[^.]+$/, ".webp"),
+            { type: "image/webp" },
+          );
+          resolve(compressed);
+        },
+        "image/webp",
+        WEBP_QUALITY,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Image load failed"));
+    };
+
+    img.src = objectUrl;
+  });
+}
 
 export function UploadTattooForm({ styles }: Props) {
   const router = useRouter();
@@ -52,7 +109,8 @@ export function UploadTattooForm({ styles }: Props) {
     const file = input.files?.[0];
     if (!file) return;
     try {
-      await startUpload([file]);
+      const compressed = await compressImage(file);
+      await startUpload([compressed]);
     } finally {
       input.value = "";
     }
@@ -66,35 +124,25 @@ export function UploadTattooForm({ styles }: Props) {
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
-    try {
-      const res = await fetch("/api/tattoos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageUrl,
-          styleId,
-          title: title.trim() || undefined,
-          description: description.trim() || undefined,
-        }),
-      });
+    await apiFetch("/api/tattoos", {
+      method: "POST",
+      body: {
+        imageUrl,
+        styleId,
+        title: title.trim() || undefined,
+        description: description.trim() || undefined,
+      },
+      successMessage: "Œuvre ajoutée au portfolio !",
+      errorMessage: "Une erreur est survenue. Veuillez réessayer.",
+      onSuccess: () => router.push("/dashboard/portfolio"),
+    });
 
-      if (!res.ok) {
-        toast.error("Une erreur est survenue. Veuillez réessayer.");
-        return;
-      }
-
-      toast.success("Œuvre ajoutée au portfolio !");
-      router.push("/dashboard/portfolio");
-    } catch {
-      toast.error("Une erreur est survenue. Veuillez réessayer.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsSubmitting(false);
   }
 
   return (
@@ -124,7 +172,7 @@ export function UploadTattooForm({ styles }: Props) {
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={isUploading}
-                className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/40 px-6 py-10 text-muted-foreground transition-colors hover:border-primary hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/40 px-6 py-10 text-muted-foreground transition-smooth transition-colors hover:border-primary hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isUploading ? (
                   <Typography tag="p">Envoi en cours...</Typography>
@@ -158,52 +206,28 @@ export function UploadTattooForm({ styles }: Props) {
 
       <section className="space-y-3">
         <Typography tag="h3">Style *</Typography>
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-2">
-            {styles.map((style) => {
-              const selected = styleId === style.id;
-              return (
-                <button
-                  key={style.id}
-                  type="button"
-                  onClick={() => {
-                    setStyleId(style.id);
-                    setErrors((prev) => ({ ...prev, styleId: "" }));
-                  }}
-                  aria-pressed={selected}
-                  className="cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <Badge
-                    variant={selected ? "default" : "outline"}
-                    className="h-auto px-4 py-2 text-sm"
-                  >
-                    {style.name}
-                  </Badge>
-                </button>
-              );
-            })}
-          </div>
-          {errors.styleId && (
-            <Typography tag="p" color="destructive">
-              {errors.styleId}
-            </Typography>
-          )}
-        </div>
+        <StyleSelector
+          styles={styles}
+          selected={styleId}
+          onToggle={(id) => {
+            setStyleId(id);
+            setErrors((prev) => ({ ...prev, styleId: "" }));
+          }}
+          error={errors.styleId}
+        />
       </section>
 
       <section className="space-y-3">
         <Typography tag="h3">Détails</Typography>
-        <div className="space-y-1">
-          <Label htmlFor="title">Titre</Label>
+        <FormField id="title" label="Titre">
           <Input
             id="title"
             placeholder="ex: Serpent japonais"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="description">Description</Label>
+        </FormField>
+        <FormField id="description" label="Description">
           <Textarea
             id="description"
             placeholder="Décrivez cette œuvre, le contexte, les techniques utilisées..."
@@ -211,7 +235,7 @@ export function UploadTattooForm({ styles }: Props) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-        </div>
+        </FormField>
       </section>
 
       <Button type="submit" disabled={isSubmitting || !imageUrl}>

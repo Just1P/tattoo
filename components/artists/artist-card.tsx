@@ -31,7 +31,7 @@ export function ArtistCard({
 
   return (
     <Link href={`/artists/${id}`} className="group block">
-      <Card className="h-full transition-shadow group-hover:shadow-md">
+      <Card className="h-full transition-smooth transition-shadow group-hover:shadow-md">
         <CardHeader className="space-y-2 pb-2">
           <div className="flex items-center gap-2">
             <Typography tag="h4">{artistName ?? "Artiste"}</Typography>

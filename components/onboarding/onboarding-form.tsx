@@ -1,15 +1,16 @@
 "use client";
 
+import { FormField } from "@/components/form/form-field";
+import { StyleSelector } from "@/components/form/style-selector";
 import Typography from "@/components/custom/Typography";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
+import { artistValidation } from "@/lib/validation/artist-validation";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 
 type Style = { id: string; name: string };
 
@@ -59,19 +60,21 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
   function validateStep(): boolean {
     const newErrors: Record<string, string> = {};
 
-    if (step === 1 && !formData.artistName.trim()) {
-      newErrors.artistName = "Le nom artistique est requis.";
+    if (step === 1) {
+      const err = artistValidation.artistName(formData.artistName);
+      if (err) newErrors.artistName = err;
     }
-    if (step === 2 && !formData.city.trim()) {
-      newErrors.city = "La ville est requise.";
+    if (step === 2) {
+      const err = artistValidation.city(formData.city);
+      if (err) newErrors.city = err;
     }
     if (step === 3) {
-      if (!/^\d{14}$/.test(formData.siret)) {
-        newErrors.siret = "Le SIRET doit contenir exactement 14 chiffres.";
-      }
+      const err = artistValidation.siret(formData.siret);
+      if (err) newErrors.siret = err;
     }
-    if (step === 5 && formData.styleIds.length === 0) {
-      newErrors.styleIds = "Sélectionnez au moins un style.";
+    if (step === 5) {
+      const err = artistValidation.styleIds(formData.styleIds);
+      if (err) newErrors.styleIds = err;
     }
 
     setErrors(newErrors);
@@ -91,29 +94,19 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
     if (!validateStep()) return;
     setIsSubmitting(true);
 
-    try {
-      const res = await fetch("/api/artist/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          priceMin: formData.priceMin ? parseInt(formData.priceMin) : undefined,
-          priceMax: formData.priceMax ? parseInt(formData.priceMax) : undefined,
-        }),
-      });
+    await apiFetch("/api/artist/onboarding", {
+      method: "POST",
+      body: {
+        ...formData,
+        priceMin: formData.priceMin ? parseInt(formData.priceMin) : undefined,
+        priceMax: formData.priceMax ? parseInt(formData.priceMax) : undefined,
+      },
+      successMessage: "Profil créé avec succès !",
+      errorMessage: "Une erreur est survenue. Veuillez réessayer.",
+      onSuccess: () => router.push("/dashboard"),
+    });
 
-      if (!res.ok) {
-        toast.error("Une erreur est survenue. Veuillez réessayer.");
-        return;
-      }
-
-      toast.success("Profil créé avec succès !");
-      router.push("/dashboard");
-    } catch {
-      toast.error("Une erreur est survenue. Veuillez réessayer.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsSubmitting(false);
   }
 
   const progressPercent = Math.round((step / TOTAL_STEPS) * 100);
@@ -132,7 +125,7 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full bg-primary transition-all duration-300"
+              className="h-full bg-primary transition-smooth"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -144,8 +137,7 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
         <CardContent className="space-y-4">
           {step === 1 && (
             <>
-              <div className="space-y-1">
-                <Label htmlFor="artistName">Nom / pseudo artistique *</Label>
+              <FormField id="artistName" label="Nom / pseudo artistique *" error={errors.artistName}>
                 <Input
                   id="artistName"
                   placeholder="ex: Dark Ink Studio"
@@ -153,14 +145,8 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
                   onChange={(e) => update("artistName", e.target.value)}
                   aria-invalid={!!errors.artistName}
                 />
-                {errors.artistName && (
-                  <Typography tag="p" color="destructive">
-                    {errors.artistName}
-                  </Typography>
-                )}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="bio">Bio / présentation</Label>
+              </FormField>
+              <FormField id="bio" label="Bio / présentation">
                 <Textarea
                   id="bio"
                   placeholder="Décrivez votre parcours, votre philosophie artistique..."
@@ -168,14 +154,13 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
                   value={formData.bio}
                   onChange={(e) => update("bio", e.target.value)}
                 />
-              </div>
+              </FormField>
             </>
           )}
 
           {step === 2 && (
             <>
-              <div className="space-y-1">
-                <Label htmlFor="city">Ville *</Label>
+              <FormField id="city" label="Ville *" error={errors.city}>
                 <Input
                   id="city"
                   placeholder="ex: Paris"
@@ -183,53 +168,39 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
                   onChange={(e) => update("city", e.target.value)}
                   aria-invalid={!!errors.city}
                 />
-                {errors.city && (
-                  <Typography tag="p" color="destructive">
-                    {errors.city}
-                  </Typography>
-                )}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="location">Adresse du salon</Label>
+              </FormField>
+              <FormField id="location" label="Adresse du salon">
                 <Input
                   id="location"
                   placeholder="ex: 12 rue de Rivoli, 75001 Paris"
                   value={formData.location}
                   onChange={(e) => update("location", e.target.value)}
                 />
-              </div>
+              </FormField>
             </>
           )}
 
           {step === 3 && (
-            <div className="space-y-1">
-              <Label htmlFor="siret">Numéro SIRET *</Label>
-              <Input
-                id="siret"
-                placeholder="14 chiffres"
-                maxLength={14}
-                value={formData.siret}
-                onChange={(e) =>
-                  update("siret", e.target.value.replace(/\D/g, ""))
-                }
-                aria-invalid={!!errors.siret}
-              />
-              {errors.siret && (
-                <Typography tag="p" color="destructive">
-                  {errors.siret}
-                </Typography>
-              )}
+            <>
+              <FormField id="siret" label="Numéro SIRET *" error={errors.siret}>
+                <Input
+                  id="siret"
+                  placeholder="14 chiffres"
+                  maxLength={14}
+                  value={formData.siret}
+                  onChange={(e) => update("siret", e.target.value.replace(/\D/g, ""))}
+                  aria-invalid={!!errors.siret}
+                />
+              </FormField>
               <Typography tag="p" color="muted">
-                Votre numéro SIRET permet de vérifier votre statut
-                professionnel.
+                Votre numéro SIRET permet de vérifier votre statut professionnel.
               </Typography>
-            </div>
+            </>
           )}
 
           {step === 4 && (
             <div className="flex gap-4">
-              <div className="flex-1 space-y-1">
-                <Label htmlFor="priceMin">Tarif min (€/h)</Label>
+              <FormField id="priceMin" label="Tarif min (€/h)" className="flex-1">
                 <Input
                   id="priceMin"
                   type="number"
@@ -238,9 +209,8 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
                   value={formData.priceMin}
                   onChange={(e) => update("priceMin", e.target.value)}
                 />
-              </div>
-              <div className="flex-1 space-y-1">
-                <Label htmlFor="priceMax">Tarif max (€/h)</Label>
+              </FormField>
+              <FormField id="priceMax" label="Tarif max (€/h)" className="flex-1">
                 <Input
                   id="priceMax"
                   type="number"
@@ -249,51 +219,27 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
                   value={formData.priceMax}
                   onChange={(e) => update("priceMax", e.target.value)}
                 />
-              </div>
+              </FormField>
             </div>
           )}
 
           {step === 5 && (
-            <div className="space-y-2">
+            <>
               <Typography tag="p" color="muted">
                 Sélectionnez vos styles de prédilection *
               </Typography>
-              <div className="flex flex-wrap gap-2">
-                {styles.map((style) => {
-                  const selected = formData.styleIds.includes(style.id);
-                  return (
-                    <button
-                      key={style.id}
-                      type="button"
-                      onClick={() => toggleStyle(style.id)}
-                      aria-pressed={selected}
-                      className="cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      <Badge
-                        variant={selected ? "default" : "outline"}
-                        className="h-auto px-4 py-2 text-sm"
-                      >
-                        {style.name}
-                      </Badge>
-                    </button>
-                  );
-                })}
-              </div>
-              {errors.styleIds && (
-                <Typography tag="p" color="destructive">
-                  {errors.styleIds}
-                </Typography>
-              )}
-            </div>
+              <StyleSelector
+                multi
+                styles={styles}
+                selected={formData.styleIds}
+                onToggle={toggleStyle}
+                error={errors.styleIds}
+              />
+            </>
           )}
 
           <div className="flex justify-between pt-4">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={prev}
-              disabled={step === 1}
-            >
+            <Button type="button" variant="ghost" onClick={prev} disabled={step === 1}>
               Précédent
             </Button>
             {step < TOTAL_STEPS ? (
@@ -301,11 +247,7 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
                 Suivant
               </Button>
             ) : (
-              <Button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-              >
+              <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? "Enregistrement..." : "Terminer"}
               </Button>
             )}
