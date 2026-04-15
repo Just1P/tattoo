@@ -64,9 +64,9 @@ function SortableTattooCard({
 }: {
   tattoo: Tattoo;
   styles: Style[];
-  onDelete: (id: string) => void;
-  onTogglePin: (id: string, pinned: boolean) => void;
-  onEdit: (id: string, data: EditState) => void;
+  onDelete: (id: string) => void | Promise<void>;
+  onTogglePin: (id: string, pinned: boolean) => void | Promise<void>;
+  onEdit: (id: string, data: EditState) => void | Promise<void>;
 }) {
   const {
     attributes,
@@ -272,6 +272,7 @@ export function PortfolioGrid({
 
     const oldIndex = tattoos.findIndex((t) => t.id === active.id);
     const newIndex = tattoos.findIndex((t) => t.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
     const reordered = arrayMove(tattoos, oldIndex, newIndex).map((t, i) => ({
       ...t,
       position: i,

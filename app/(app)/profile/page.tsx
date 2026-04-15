@@ -90,7 +90,7 @@ export default async function ProfilePage() {
           </Button>
           <ShareButton
             size="lg"
-            url={`${process.env.NEXT_PUBLIC_APP_URL}/profile`}
+            url={`${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}${isArtist && user.artistProfile?.id ? `/artists/${user.artistProfile.id}` : "/profile"}`}
             title={user.artistProfile?.artistName ?? user.name ?? "Mon profil"}
           />
         </div>

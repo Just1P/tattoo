@@ -1,11 +1,11 @@
 export const variants = {
   tag: {
-    h1: "text-[56px] font-semi-bold leading-13 hyphens-auto sm:hyphens-none font-heading",
-    h2: "text-[32px] font-semi-bold hyphens-auto sm:hyphens-none font-heading",
-    h3: "text-2xl font-semi-bold hyphens-auto sm:hyphens-none font-heading",
-    h4: "text-xl font-semi-bold hyphens-auto sm:hyphens-none font-heading",
-    h5: "text-base font-semi-bold font-heading",
-    h6: "text-xs font-semi-bold font-heading",
+    h1: "text-[56px] font-semibold leading-13 hyphens-auto sm:hyphens-none font-heading",
+    h2: "text-[32px] font-semibold hyphens-auto sm:hyphens-none font-heading",
+    h3: "text-2xl font-semibold hyphens-auto sm:hyphens-none font-heading",
+    h4: "text-xl font-semibold hyphens-auto sm:hyphens-none font-heading",
+    h5: "text-base font-semibold font-heading",
+    h6: "text-xs font-semibold font-heading",
     p: "text-sm",
     span: "text-sm",
   },

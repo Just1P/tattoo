@@ -15,6 +15,7 @@ import {
   TelegramIcon,
 } from "react-share";
 import { Link, Check } from "lucide-react";
+import { toast } from "sonner";
 
 type ShareButtonProps = { url: string; title: string } & Pick<
   VariantProps<typeof buttonVariants>,
@@ -37,9 +38,13 @@ export function ShareButton({ url, title, size }: ShareButtonProps) {
   }, []);
 
   async function copyLink() {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Impossible de copier le lien.");
+    }
   }
 
   return (

@@ -7,7 +7,7 @@ import { z } from "zod";
 const userSchema = z.object({
   firstName: z.string().trim().min(1, "Le prénom est requis"),
   lastName: z.string().trim().min(1, "Le nom est requis"),
-  description: z.string().trim().optional().nullable(),
+  description: z.string().trim().transform((v) => v || null).optional().nullable(),
 });
 
 export async function PATCH(req: NextRequest) {

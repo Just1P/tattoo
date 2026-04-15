@@ -4,9 +4,11 @@ import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+const emptyToNull = z.string().trim().transform((v) => v || null);
+
 const patchSchema = z.object({
-  title: z.string().trim().optional(),
-  description: z.string().trim().optional(),
+  title: emptyToNull.optional(),
+  description: emptyToNull.optional(),
   styleId: z.string().min(1).optional(),
   pinned: z.boolean().optional(),
   position: z.number().int().min(0).optional(),
