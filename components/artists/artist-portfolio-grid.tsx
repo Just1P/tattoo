@@ -31,7 +31,9 @@ export function ArtistPortfolioGrid({ tattoos }: { tattoos: Tattoo[] }) {
             fill
             className="object-cover transition-smooth group-hover:scale-105"
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+            quality={85}
             priority={index < 4}
+            loading={index < 4 ? undefined : "lazy"}
           />
           <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/60 to-transparent p-2 opacity-0 transition-smooth transition-opacity group-hover:opacity-100">
             {tattoo.title && (

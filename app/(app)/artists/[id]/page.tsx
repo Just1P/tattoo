@@ -52,7 +52,8 @@ export default async function ArtistPublicPage({ params }: Props) {
               alt={heroTattoo.title ?? artist.artistName ?? "Portfolio"}
               fill
               className="object-cover"
-              sizes="500px"
+              sizes="(max-width: 768px) 100vw, 500px"
+              quality={90}
               priority
             />
           </div>
