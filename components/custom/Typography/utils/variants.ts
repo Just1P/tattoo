@@ -25,6 +25,7 @@ export const variants = {
   },
   color: {
     primary: "text-primary",
+    "primary-foreground": "text-primary-foreground",
     secondary: "text-secondary-foreground",
     foreground: "text-foreground",
     muted: "text-muted-foreground",

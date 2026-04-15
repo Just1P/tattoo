@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
+import Typography from "@/components/custom/Typography"
 
 import { cn } from "@/lib/utils"
 
@@ -9,7 +10,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        default: "bg-primary hover:bg-primary/80",
         outline:
           "border-border bg-input/30 hover:bg-input/50 hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
@@ -44,12 +45,22 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
+  children,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
   }) {
   const Comp = asChild ? Slot.Root : "button"
+
+  const content =
+    variant === "default" && typeof children === "string" ? (
+      <Typography tag="span" color="primary-foreground">
+        {children}
+      </Typography>
+    ) : (
+      children
+    )
 
   return (
     <Comp
@@ -58,7 +69,9 @@ function Button({
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
-    />
+    >
+      {content}
+    </Comp>
   )
 }
 

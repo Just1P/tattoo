@@ -1,9 +1,10 @@
-import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
-import { ArtistProfileHeader } from "@/components/artists/artist-profile-header";
 import { ArtistPortfolioGrid } from "@/components/artists/artist-portfolio-grid";
+import { ArtistProfileHeader } from "@/components/artists/artist-profile-header";
 import { ContactButton } from "@/components/artists/contact-button";
 import Typography from "@/components/custom/Typography";
+import { prisma } from "@/lib/prisma";
+import Image from "next/image";
+import { notFound } from "next/navigation";
 
 export const revalidate = 3600;
 
@@ -43,26 +44,43 @@ export default async function ArtistPublicPage({ params }: Props) {
   if (!artist) notFound();
 
   const styles = artist.artistStyles.map((as) => as.style);
+  const heroTattoo = artist.tattoos[0] ?? null;
 
   return (
-    <main className="mx-auto max-w-5xl space-y-10 px-4 py-10">
-      <ArtistProfileHeader
-        artistName={artist.artistName}
-        bio={artist.bio}
-        city={artist.city}
-        location={artist.location}
-        priceMin={artist.priceMin}
-        priceMax={artist.priceMax}
-        instagramUrl={artist.instagramUrl}
-        verified={artist.verified}
-        styles={styles}
-      />
+    <main>
+      <section className="flex min-h-[40vh] flex-col md:flex-row">
+        <div className="flex flex-col justify-center gap-6 px-8 py-10 md:w-[75%]">
+          <ArtistProfileHeader
+            artistName={artist.artistName}
+            bio={artist.bio}
+            city={artist.city}
+            location={artist.location}
+            priceMin={artist.priceMin}
+            priceMax={artist.priceMax}
+            instagramUrl={artist.instagramUrl}
+            verified={artist.verified}
+            styles={styles}
+          />
+          <div className="flex">
+            <ContactButton artistId={artist.id} />
+          </div>
+        </div>
 
-      <div className="flex">
-        <ContactButton artistId={artist.id} />
-      </div>
+        {heroTattoo && (
+          <div className="relative h-75 w-125 shrink-0 overflow-hidden rounded-4xl">
+            <Image
+              src={heroTattoo.imageUrl}
+              alt={heroTattoo.title ?? artist.artistName ?? "Portfolio"}
+              fill
+              className="object-cover"
+              sizes="500px"
+              priority
+            />
+          </div>
+        )}
+      </section>
 
-      <section className="space-y-4">
+      <section className="space-y-6 px-8 py-12">
         <Typography tag="h2">Portfolio</Typography>
         <ArtistPortfolioGrid tattoos={artist.tattoos} />
       </section>

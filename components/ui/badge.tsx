@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
+import Typography from "@/components/custom/Typography"
 
 import { cn } from "@/lib/utils"
 
@@ -9,7 +10,7 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        default: "bg-primary [a]:hover:bg-primary/80",
         secondary:
           "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
         destructive:
@@ -31,10 +32,20 @@ function Badge({
   className,
   variant = "default",
   asChild = false,
+  children,
   ...props
 }: React.ComponentProps<"span"> &
   VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
   const Comp = asChild ? Slot.Root : "span"
+
+  const content =
+    variant === "default" && typeof children === "string" ? (
+      <Typography tag="span" color="primary-foreground" size="xs">
+        {children}
+      </Typography>
+    ) : (
+      children
+    )
 
   return (
     <Comp
@@ -42,7 +53,9 @@ function Badge({
       data-variant={variant}
       className={cn(badgeVariants({ variant }), className)}
       {...props}
-    />
+    >
+      {content}
+    </Comp>
   )
 }
 
