@@ -38,6 +38,12 @@
     "uploadthing": "^7.7.4",
     "zod": "^4"
   },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions",
+    "last 2 Edge versions"
+  ],
   "devDependencies": {
     "@better-auth/cli": "^1.4.21",
     "@tailwindcss/postcss": "^4",

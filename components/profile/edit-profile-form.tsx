@@ -1,14 +1,15 @@
 "use client";
 
+import { FormField } from "@/components/form/form-field";
+import { StyleSelector } from "@/components/form/style-selector";
 import Typography from "@/components/custom/Typography";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
+import { validateArtistForm } from "@/lib/validation/artist-validation";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 
 type Style = { id: string; name: string };
 
@@ -68,6 +69,7 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
         ? prev.styleIds.filter((s) => s !== id)
         : [...prev.styleIds, id],
     }));
+    setErrors((prev) => ({ ...prev, styleIds: "" }));
   }
 
   function validate(): boolean {
@@ -75,84 +77,73 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
     if (!userData.firstName.trim()) newErrors.firstName = "Le prénom est requis.";
     if (!userData.lastName.trim()) newErrors.lastName = "Le nom est requis.";
     if (isArtist) {
-      if (!artistData.artistName.trim()) newErrors.artistName = "Le nom artistique est requis.";
-      if (!artistData.city.trim()) newErrors.city = "La ville est requise.";
-      if (!/^\d{14}$/.test(artistData.siret)) newErrors.siret = "Le SIRET doit contenir exactement 14 chiffres.";
-      if (artistData.styleIds.length === 0) newErrors.styleIds = "Sélectionnez au moins un style.";
-      if (artistData.instagramUrl && !/^https?:\/\/.+/.test(artistData.instagramUrl))
-        newErrors.instagramUrl = "L'URL Instagram doit commencer par http(s)://";
+      Object.assign(newErrors, validateArtistForm(artistData));
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
 
-    try {
-      const userRes = await fetch("/api/user/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-      });
-      if (!userRes.ok) throw new Error();
+    const userOk = await apiFetch("/api/user/profile", {
+      method: "PATCH",
+      body: userData,
+      errorMessage: "Une erreur est survenue.",
+    });
 
-      if (isArtist) {
-        const artistRes = await fetch("/api/artist/profile", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...artistData,
-            priceMin: artistData.priceMin ? parseInt(artistData.priceMin) : null,
-            priceMax: artistData.priceMax ? parseInt(artistData.priceMax) : null,
-            instagramUrl: artistData.instagramUrl || null,
-          }),
-        });
-        if (!artistRes.ok) throw new Error();
-      }
-
-      toast.success("Profil mis à jour !");
-      router.push("/profile");
-      router.refresh();
-    } catch {
-      toast.error("Une erreur est survenue.");
-    } finally {
+    if (userOk === null) {
       setIsSubmitting(false);
+      return;
     }
+
+    if (isArtist) {
+      const artistOk = await apiFetch("/api/artist/profile", {
+        method: "PATCH",
+        body: {
+          ...artistData,
+          priceMin: artistData.priceMin ? parseInt(artistData.priceMin) : null,
+          priceMax: artistData.priceMax ? parseInt(artistData.priceMax) : null,
+          instagramUrl: artistData.instagramUrl || null,
+        },
+        errorMessage: "Une erreur est survenue.",
+      });
+      if (artistOk === null) {
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    router.push("/profile");
+    router.refresh();
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Infos communes */}
       <section className="space-y-4">
         <Typography tag="h3">Informations personnelles</Typography>
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <Label htmlFor="firstName">Prénom *</Label>
+          <FormField id="firstName" label="Prénom *" error={errors.firstName}>
             <Input
               id="firstName"
               value={userData.firstName}
               onChange={(e) => updateUser("firstName", e.target.value)}
               aria-invalid={!!errors.firstName}
             />
-            {errors.firstName && <Typography tag="p" color="destructive">{errors.firstName}</Typography>}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="lastName">Nom *</Label>
+          </FormField>
+          <FormField id="lastName" label="Nom *" error={errors.lastName}>
             <Input
               id="lastName"
               value={userData.lastName}
               onChange={(e) => updateUser("lastName", e.target.value)}
               aria-invalid={!!errors.lastName}
             />
-            {errors.lastName && <Typography tag="p" color="destructive">{errors.lastName}</Typography>}
-          </div>
+          </FormField>
         </div>
         {!isArtist && (
-          <div className="space-y-1">
-            <Label htmlFor="description">Description</Label>
+          <FormField id="description" label="Description">
             <Textarea
               id="description"
               rows={3}
@@ -160,17 +151,15 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
               value={userData.description}
               onChange={(e) => updateUser("description", e.target.value)}
             />
-          </div>
+          </FormField>
         )}
       </section>
 
-      {/* Infos artiste */}
       {isArtist && (
         <>
           <section className="space-y-4">
             <Typography tag="h3">Identité artistique</Typography>
-            <div className="space-y-1">
-              <Label htmlFor="artistName">Nom / pseudo artistique *</Label>
+            <FormField id="artistName" label="Nom / pseudo artistique *" error={errors.artistName}>
               <Input
                 id="artistName"
                 placeholder="ex: Dark Ink Studio"
@@ -178,10 +167,8 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
                 onChange={(e) => updateArtist("artistName", e.target.value)}
                 aria-invalid={!!errors.artistName}
               />
-              {errors.artistName && <Typography tag="p" color="destructive">{errors.artistName}</Typography>}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="bio">Bio</Label>
+            </FormField>
+            <FormField id="bio" label="Bio">
               <Textarea
                 id="bio"
                 rows={4}
@@ -189,9 +176,8 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
                 value={artistData.bio}
                 onChange={(e) => updateArtist("bio", e.target.value)}
               />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="instagramUrl">Instagram</Label>
+            </FormField>
+            <FormField id="instagramUrl" label="Instagram" error={errors.instagramUrl}>
               <Input
                 id="instagramUrl"
                 placeholder="https://instagram.com/votre_compte"
@@ -199,14 +185,12 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
                 onChange={(e) => updateArtist("instagramUrl", e.target.value)}
                 aria-invalid={!!errors.instagramUrl}
               />
-              {errors.instagramUrl && <Typography tag="p" color="destructive">{errors.instagramUrl}</Typography>}
-            </div>
+            </FormField>
           </section>
 
           <section className="space-y-4">
             <Typography tag="h3">Localisation</Typography>
-            <div className="space-y-1">
-              <Label htmlFor="city">Ville *</Label>
+            <FormField id="city" label="Ville *" error={errors.city}>
               <Input
                 id="city"
                 placeholder="ex: Paris"
@@ -214,23 +198,20 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
                 onChange={(e) => updateArtist("city", e.target.value)}
                 aria-invalid={!!errors.city}
               />
-              {errors.city && <Typography tag="p" color="destructive">{errors.city}</Typography>}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="location">Adresse du salon</Label>
+            </FormField>
+            <FormField id="location" label="Adresse du salon">
               <Input
                 id="location"
                 placeholder="ex: 12 rue de Rivoli, 75001 Paris"
                 value={artistData.location}
                 onChange={(e) => updateArtist("location", e.target.value)}
               />
-            </div>
+            </FormField>
           </section>
 
           <section className="space-y-4">
             <Typography tag="h3">Informations légales</Typography>
-            <div className="space-y-1">
-              <Label htmlFor="siret">Numéro SIRET *</Label>
+            <FormField id="siret" label="Numéro SIRET *" error={errors.siret}>
               <Input
                 id="siret"
                 placeholder="14 chiffres"
@@ -239,15 +220,13 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
                 onChange={(e) => updateArtist("siret", e.target.value.replace(/\D/g, ""))}
                 aria-invalid={!!errors.siret}
               />
-              {errors.siret && <Typography tag="p" color="destructive">{errors.siret}</Typography>}
-            </div>
+            </FormField>
           </section>
 
           <section className="space-y-4">
             <Typography tag="h3">Tarifs</Typography>
             <div className="flex gap-4">
-              <div className="flex-1 space-y-1">
-                <Label htmlFor="priceMin">Tarif min (€/h)</Label>
+              <FormField id="priceMin" label="Tarif min (€/h)" className="flex-1">
                 <Input
                   id="priceMin"
                   type="number"
@@ -256,9 +235,8 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
                   value={artistData.priceMin}
                   onChange={(e) => updateArtist("priceMin", e.target.value)}
                 />
-              </div>
-              <div className="flex-1 space-y-1">
-                <Label htmlFor="priceMax">Tarif max (€/h)</Label>
+              </FormField>
+              <FormField id="priceMax" label="Tarif max (€/h)" className="flex-1">
                 <Input
                   id="priceMax"
                   type="number"
@@ -267,36 +245,19 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
                   value={artistData.priceMax}
                   onChange={(e) => updateArtist("priceMax", e.target.value)}
                 />
-              </div>
+              </FormField>
             </div>
           </section>
 
           <section className="space-y-4">
             <Typography tag="h3">Styles pratiqués</Typography>
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-2">
-                {styles.map((style) => {
-                  const selected = artistData.styleIds.includes(style.id);
-                  return (
-                    <button
-                      key={style.id}
-                      type="button"
-                      onClick={() => toggleStyle(style.id)}
-                      aria-pressed={selected}
-                      className="cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                      <Badge
-                        variant="outline"
-                        className={`h-auto px-4 py-2 text-sm transition-smooth ${selected ? "bg-primary text-primary-foreground border-primary" : ""}`}
-                      >
-                        {style.name}
-                      </Badge>
-                    </button>
-                  );
-                })}
-              </div>
-              {errors.styleIds && <Typography tag="p" color="destructive">{errors.styleIds}</Typography>}
-            </div>
+            <StyleSelector
+              multi
+              styles={styles}
+              selected={artistData.styleIds}
+              onToggle={toggleStyle}
+              error={errors.styleIds}
+            />
           </section>
         </>
       )}

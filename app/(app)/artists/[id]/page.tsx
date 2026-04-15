@@ -2,7 +2,7 @@ import { ArtistPortfolioGrid } from "@/components/artists/artist-portfolio-grid"
 import { ArtistProfileHeader } from "@/components/artists/artist-profile-header";
 import { ContactButton } from "@/components/artists/contact-button";
 import Typography from "@/components/custom/Typography";
-import { prisma } from "@/lib/prisma";
+import { getAllPublicArtistIds, getPublicArtist } from "@/lib/artist-queries";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
@@ -12,34 +12,13 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-const publicWhere = { verified: "approved" as const };
-
 export async function generateStaticParams() {
-  const artists = await prisma.tattooArtist.findMany({
-    where: publicWhere,
-    select: { id: true },
-  });
-  return artists.map((a) => ({ id: a.id }));
-}
-
-async function getArtist(id: string) {
-  return prisma.tattooArtist.findFirst({
-    where: { id, ...publicWhere },
-    include: {
-      tattoos: {
-        orderBy: [{ pinned: "desc" }, { position: "asc" }],
-        include: { style: { select: { name: true } } },
-      },
-      artistStyles: {
-        include: { style: { select: { id: true, name: true } } },
-      },
-    },
-  });
+  return getAllPublicArtistIds();
 }
 
 export default async function ArtistPublicPage({ params }: Props) {
   const { id } = await params;
-  const artist = await getArtist(id);
+  const artist = await getPublicArtist(id);
 
   if (!artist) notFound();
 

@@ -23,10 +23,18 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pin, PinOff, Pencil, Trash2, X, Check } from "lucide-react";
+import {
+  GripVertical,
+  Pin,
+  PinOff,
+  Pencil,
+  Trash2,
+  X,
+  Check,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type Style = { id: string; name: string };
@@ -60,8 +68,14 @@ function SortableTattooCard({
   onTogglePin: (id: string, pinned: boolean) => void;
   onEdit: (id: string, data: EditState) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: tattoo.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tattoo.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -91,7 +105,6 @@ function SortableTattooCard({
       style={style}
       className="group relative overflow-hidden rounded-lg border border-border bg-card"
     >
-      {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
@@ -100,14 +113,14 @@ function SortableTattooCard({
         <GripVertical className="size-4 text-white" />
       </div>
 
-      {/* Pin badge */}
       {tattoo.pinned && (
         <div className="absolute right-2 top-2 z-10">
-          <Badge variant="default" className="text-xs">Épinglé</Badge>
+          <Badge variant="default" className="text-xs">
+            Épinglé
+          </Badge>
         </div>
       )}
 
-      {/* Image */}
       <div className="relative aspect-square bg-muted">
         <Image
           src={tattoo.imageUrl}
@@ -118,7 +131,6 @@ function SortableTattooCard({
         />
       </div>
 
-      {/* Infos + actions */}
       {isEditing ? (
         <div className="space-y-3 p-3">
           <div className="space-y-1">
@@ -126,7 +138,9 @@ function SortableTattooCard({
             <Input
               id={`title-${tattoo.id}`}
               value={editData.title}
-              onChange={(e) => setEditData((d) => ({ ...d, title: e.target.value }))}
+              onChange={(e) =>
+                setEditData((d) => ({ ...d, title: e.target.value }))
+              }
               placeholder="Titre de l'œuvre"
             />
           </div>
@@ -135,7 +149,9 @@ function SortableTattooCard({
             <Textarea
               id={`desc-${tattoo.id}`}
               value={editData.description}
-              onChange={(e) => setEditData((d) => ({ ...d, description: e.target.value }))}
+              onChange={(e) =>
+                setEditData((d) => ({ ...d, description: e.target.value }))
+              }
               rows={2}
               placeholder="Description"
             />
@@ -165,7 +181,11 @@ function SortableTattooCard({
               <Check className="size-3.5" />
               {isSaving ? "Sauvegarde..." : "Sauvegarder"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setIsEditing(false)}
+            >
               <X className="size-3.5" />
               Annuler
             </Button>
@@ -229,7 +249,13 @@ export function PortfolioGrid({
   initialTattoos: Tattoo[];
   styles: Style[];
 }) {
+  const [mounted, setMounted] = useState(false);
   const [tattoos, setTattoos] = useState(initialTattoos);
+
+  useEffect(() => {
+    const id = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(id);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -323,6 +349,8 @@ export function PortfolioGrid({
       </div>
     );
   }
+
+  if (!mounted) return null;
 
   return (
     <DndContext
