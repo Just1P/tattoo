@@ -247,8 +247,8 @@ export function EditProfileForm({ initialData, styles }: Props) {
                   className="cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <Badge
-                    variant={selected ? "default" : "outline"}
-                    className="h-auto px-4 py-2 text-sm"
+                    variant="outline"
+                    className={`h-auto px-4 py-2 text-sm transition-smooth ${selected ? "bg-primary text-primary-foreground border-primary" : ""}`}
                   >
                     {style.name}
                   </Badge>
