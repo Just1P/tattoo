@@ -32,7 +32,7 @@ export function AppSidebar() {
     ...(role === "artist"
       ? [
           { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-          { label: "Mon profil", href: "/dashboard/profile", icon: User },
+          { label: "Mon profil", href: "/profile", icon: User },
           { label: "Portfolio", href: "/dashboard/portfolio", icon: Images },
         ]
       : []),

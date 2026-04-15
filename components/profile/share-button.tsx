@@ -1,7 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import Typography from "@/components/custom/Typography";
+import { type VariantProps } from "class-variance-authority";
 import { useState, useRef, useEffect } from "react";
 import {
   WhatsappShareButton,
@@ -15,7 +16,12 @@ import {
 } from "react-share";
 import { Link, Check } from "lucide-react";
 
-export function ShareButton({ url, title }: { url: string; title: string }) {
+type ShareButtonProps = { url: string; title: string } & Pick<
+  VariantProps<typeof buttonVariants>,
+  "size"
+>;
+
+export function ShareButton({ url, title, size }: ShareButtonProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -38,7 +44,7 @@ export function ShareButton({ url, title }: { url: string; title: string }) {
 
   return (
     <div ref={ref} className="relative">
-      <Button variant="outline" onClick={() => setOpen((o) => !o)}>
+      <Button variant="outline" size={size} onClick={() => setOpen((o) => !o)}>
         Partager
       </Button>
 

@@ -85,10 +85,11 @@ export default async function ProfilePage() {
         )}
 
         <div className="flex gap-3">
-          <Button asChild>
+          <Button asChild size="lg">
             <Link href="/profile/edit">Modifier</Link>
           </Button>
           <ShareButton
+            size="lg"
             url={`${process.env.NEXT_PUBLIC_APP_URL}/profile`}
             title={user.artistProfile?.artistName ?? user.name ?? "Mon profil"}
           />
