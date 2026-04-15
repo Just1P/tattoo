@@ -14,6 +14,8 @@ export default function AuthLayout({
             alt="Tattoo art"
             fill
             className="object-cover"
+            sizes="50vw"
+            priority
           />
         </div>
       </div>

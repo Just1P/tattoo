@@ -45,8 +45,8 @@ export function AppSidebar() {
           <Image
             src="/logo/logo.png"
             alt="Logo"
-            width={400}
-            height={400}
+            width={48}
+            height={48}
             className="size-11"
           />
         </Link>

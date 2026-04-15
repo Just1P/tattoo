@@ -67,7 +67,6 @@ export async function PATCH(
 
   const { position, ...rest } = parsed.data;
 
-  // Réordonnancement : décale les autres œuvres si besoin
   if (position !== undefined && position !== tattoo.position) {
     await prisma.$transaction(async (tx) => {
       const oldPos = tattoo.position;
