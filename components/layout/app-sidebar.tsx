@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { signOut, useSession } from "@/lib/auth-client";
-import { Images, LayoutDashboard, LogIn, LogOut, Search, User } from "lucide-react";
+import { BookOpen, CalendarDays, Images, LayoutDashboard, LogIn, LogOut, Search, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -34,6 +34,13 @@ export function AppSidebar() {
           { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
           { label: "Mon profil", href: "/profile", icon: User },
           { label: "Portfolio", href: "/dashboard/portfolio", icon: Images },
+          { label: "Disponibilités", href: "/dashboard/availability", icon: CalendarDays },
+          { label: "Réservations", href: "/dashboard/bookings", icon: BookOpen },
+        ]
+      : []),
+    ...(role === "client"
+      ? [
+          { label: "Mes rendez-vous", href: "/bookings", icon: BookOpen },
         ]
       : []),
   ];
