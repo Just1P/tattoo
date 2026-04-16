@@ -1,5 +1,6 @@
 import { ArtistPortfolioGrid } from "@/components/artists/artist-portfolio-grid";
 import { ArtistProfileHeader } from "@/components/artists/artist-profile-header";
+import { BookingRequestSheet } from "@/components/artists/booking-request-sheet";
 import { ContactButton } from "@/components/artists/contact-button";
 import Typography from "@/components/custom/Typography";
 import { getAllPublicArtistIds, getPublicArtist } from "@/lib/artist-queries";
@@ -40,7 +41,11 @@ export default async function ArtistPublicPage({ params }: Props) {
             verified={artist.verified}
             styles={styles}
           />
-          <div className="flex">
+          <div className="flex gap-3">
+            <BookingRequestSheet
+              artistId={artist.id}
+              artistName={artist.artistName}
+            />
             <ContactButton artistId={artist.id} />
           </div>
         </div>
