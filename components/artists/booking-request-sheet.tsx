@@ -20,6 +20,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -169,10 +170,15 @@ export function BookingRequestSheet({ artistId, artistName }: Props) {
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
             />
-            <p className="text-xs text-muted-foreground">
-              Plus votre description est précise, mieux l'artiste pourra estimer
-              le temps nécessaire.
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Plus votre description est précise, mieux l'artiste pourra estimer
+                le temps nécessaire.
+              </p>
+              <span className={cn("text-xs shrink-0 ml-2", description.length < 10 ? "text-destructive" : "text-muted-foreground")}>
+                {description.length}/10 min
+              </span>
+            </div>
           </div>
 
           <SheetFooter>

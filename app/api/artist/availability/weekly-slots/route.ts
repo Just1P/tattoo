@@ -1,18 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const DAY_ORDER = [
-  "MONDAY",
-  "TUESDAY",
-  "WEDNESDAY",
-  "THURSDAY",
-  "FRIDAY",
-  "SATURDAY",
-  "SUNDAY",
-];
 
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -34,8 +25,6 @@ const weeklySlotSchema = z
     message: "L'heure de fin doit être après l'heure de début",
     path: ["endTime"],
   });
-
-void DAY_ORDER; // used for ordering in GET /availability
 
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -76,10 +65,19 @@ export async function POST(req: NextRequest) {
       data: { artistId: artist.id, ...parsed.data },
     });
     return NextResponse.json(slot, { status: 201 });
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "Ce créneau existe déjà" },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
-      { error: "Ce créneau existe déjà" },
-      { status: 409 }
+      { error: "Erreur interne du serveur" },
+      { status: 500 }
     );
   }
 }

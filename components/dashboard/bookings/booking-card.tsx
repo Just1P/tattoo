@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type BookingStatus = "pending" | "confirmed" | "cancelled";
@@ -103,6 +103,14 @@ export function BookingCard({ booking, onStatusChange }: Props) {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Reset du formulaire à chaque changement d'action pour éviter de mélanger les états
+  useEffect(() => {
+    setDate(undefined);
+    setStartTime("09:00");
+    setEndTime("12:00");
+    setNote("");
+  }, [action]);
+
   async function handleConfirm() {
     if (!date) {
       toast.error("Choisissez une date");
@@ -129,7 +137,11 @@ export function BookingCard({ booking, onStatusChange }: Props) {
         toast.error(data.error ?? "Erreur lors de la confirmation");
         return;
       }
+      // Met à jour le booking complet avec les données retournées par l'API
+      const updated = await res.json();
       onStatusChange(booking.id, "confirmed");
+      // Propage les champs mis à jour (startAt, endAt, artistNote) via la callback
+      Object.assign(booking, updated);
       toast.success("Réservation confirmée");
       setAction(null);
     } finally {
@@ -163,10 +175,12 @@ export function BookingCard({ booking, onStatusChange }: Props) {
 
   return (
     <div className="rounded-lg border bg-card">
-      {/* En-tête */}
-      <div
-        className="flex cursor-pointer items-center justify-between p-4"
+      {/* En-tête — bouton accessible au clavier */}
+      <button
+        type="button"
+        className="flex w-full cursor-pointer items-center justify-between p-4 text-left"
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
       >
         <div className="flex items-center gap-3">
           <div>
@@ -194,7 +208,7 @@ export function BookingCard({ booking, onStatusChange }: Props) {
             {format(new Date(booking.createdAt), "d MMM yyyy", { locale: fr })}
           </span>
         </div>
-      </div>
+      </button>
 
       {/* Détail dépliable */}
       {expanded && (

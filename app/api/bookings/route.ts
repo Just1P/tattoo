@@ -10,7 +10,7 @@ const bookingRequestSchema = z.object({
   bodyPart: z.string().trim().min(1, "La zone est requise"),
   size: z.enum(["petit", "moyen", "grand", "tres_grand"]),
   description: z.string().trim().min(10, "Décrivez votre projet en quelques mots"),
-  referenceUrls: z.array(z.string().url()).optional().default([]),
+  referenceUrls: z.array(z.url()).optional().default([]),
 });
 
 export async function POST(req: NextRequest) {
