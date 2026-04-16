@@ -32,6 +32,16 @@ enum BookingStatus {
   cancelled
 }
 
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
 // ─────────────────────────────────────────────
 // Modèles
 // ─────────────────────────────────────────────
@@ -83,11 +93,13 @@ model TattooArtist {
   updatedAt      DateTime           @updatedAt
 
   // Relations
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tattoos      Tattoo[]
-  artistStyles ArtistStyle[]
-  followers    ArtistFollower[]
-  bookings     Booking[]
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tattoos        Tattoo[]
+  artistStyles   ArtistStyle[]
+  followers      ArtistFollower[]
+  bookings       Booking[]
+  weeklySlots    WeeklySlot[]
+  blockedPeriods BlockedPeriod[]
 }
 
 model Tattoo {
@@ -162,20 +174,55 @@ model FavoriteTattoo {
 }
 
 model Booking {
-  id         String        @id @default(uuid())
-  artistId   String
-  userId     String
-  calEventId String?       @unique
-  startAt    DateTime
-  endAt      DateTime
-  status     BookingStatus @default(pending)
-  notes      String?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  id            String        @id @default(uuid())
+  artistId      String
+  userId        String
+  calEventId    String?       @unique
+  startAt       DateTime?
+  endAt         DateTime?
+  status        BookingStatus @default(pending)
+  // Détails de la demande client
+  tattooType    String?       // "premier_rdv" | "remplissage" | "retouche"
+  bodyPart      String?
+  size          String?       // "petit" | "moyen" | "grand" | "tres_grand"
+  description   String?
+  referenceUrls String[]      @default([])
+  // Message de refus ou contre-proposition
+  artistNote    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   // Relations
   artist TattooArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Créneau récurrent hebdomadaire (ex: lundi 10h-18h)
+model WeeklySlot {
+  id        String    @id @default(uuid())
+  artistId  String
+  day       DayOfWeek
+  startTime String    // format "HH:MM"
+  endTime   String    // format "HH:MM"
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  artist TattooArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([artistId, day, startTime, endTime])
+}
+
+// Période bloquée (congés, conventions, etc.)
+model BlockedPeriod {
+  id        String   @id @default(uuid())
+  artistId  String
+  label     String?
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  artist TattooArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
 }
 
 model Conversation {
