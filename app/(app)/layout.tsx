@@ -5,28 +5,22 @@ import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-const ROLE_SELECTION_PATH = "/role-selection";
-
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const requestHeaders = await headers();
-  const pathname = requestHeaders.get("x-pathname") ?? "";
+  const session = await auth.api.getSession({ headers: requestHeaders });
 
-  if (pathname !== ROLE_SELECTION_PATH) {
-    const session = await auth.api.getSession({ headers: requestHeaders });
+  if (session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { roleSelected: true },
+    });
 
-    if (session) {
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { roleSelected: true },
-      });
-
-      if (user && !user.roleSelected) {
-        redirect(ROLE_SELECTION_PATH);
-      }
+    if (user && !user.roleSelected) {
+      redirect("/role-selection");
     }
   }
 

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function RoleSelectionPage() {
@@ -35,12 +35,13 @@ export default function RoleSelectionPage() {
     }
   }
 
-  if (isPending) return null;
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.push("/login");
+    }
+  }, [isPending, session, router]);
 
-  if (!session) {
-    router.push("/login");
-    return null;
-  }
+  if (isPending || !session) return null;
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
