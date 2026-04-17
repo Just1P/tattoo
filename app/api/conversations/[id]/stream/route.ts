@@ -6,7 +6,6 @@ import { NextRequest } from "next/server";
 type Params = { params: Promise<{ id: string }> };
 
 const POLL_INTERVAL_MS = 2000;
-// Keepalive pour éviter que les proxies/navigateurs ferment la connexion inactive
 const KEEPALIVE_INTERVAL_MS = 25000;
 
 export async function GET(req: NextRequest, { params }: Params) {
@@ -18,22 +17,21 @@ export async function GET(req: NextRequest, { params }: Params) {
   const { id } = await params;
 
   const participant = await prisma.conversationParticipant.findUnique({
-    where: { conversationId_userId: { conversationId: id, userId: session.user.id } },
+    where: {
+      conversationId_userId: { conversationId: id, userId: session.user.id },
+    },
   });
 
   if (!participant) {
     return new Response("Conversation introuvable", { status: 404 });
   }
 
-  // afterId : on ne renvoie que les messages créés après ce point
-  // Le client passe l'ID du dernier message qu'il connaît
   const afterId = req.nextUrl.searchParams.get("afterId");
 
-  // Résout le createdAt du message de référence pour filtrer par date
   let afterDate: Date | null = null;
   if (afterId) {
-    const ref = await prisma.message.findUnique({
-      where: { id: afterId },
+    const ref = await prisma.message.findFirst({
+      where: { id: afterId, conversationId: id },
       select: { createdAt: true },
     });
     afterDate = ref?.createdAt ?? null;
@@ -41,8 +39,14 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const encoder = new TextEncoder();
 
-  function send(stream: ReadableStreamDefaultController, event: string, data: unknown) {
-    stream.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+  function send(
+    stream: ReadableStreamDefaultController,
+    event: string,
+    data: unknown,
+  ) {
+    stream.enqueue(
+      encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
+    );
   }
 
   const readable = new ReadableStream({
@@ -51,12 +55,16 @@ export async function GET(req: NextRequest, { params }: Params) {
 
       req.signal.addEventListener("abort", () => {
         closed = true;
-        try { controller.close(); } catch { /* déjà fermé */ }
+        try {
+          controller.close();
+        } catch {
+          /* déjà fermé */
+        }
       });
 
       let lastDate = afterDate ?? new Date();
+      let lastId = afterId ?? null;
 
-      // Keepalive — commentaire SSE (ignoré par le client)
       const keepalive = setInterval(() => {
         if (closed) return;
         try {
@@ -66,7 +74,6 @@ export async function GET(req: NextRequest, { params }: Params) {
         }
       }, KEEPALIVE_INTERVAL_MS);
 
-      // Boucle de poll côté serveur
       while (!closed) {
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
         if (closed) break;
@@ -75,16 +82,18 @@ export async function GET(req: NextRequest, { params }: Params) {
           const newMessages = await prisma.message.findMany({
             where: {
               conversationId: id,
-              createdAt: { gt: lastDate },
+              OR: [
+                { createdAt: { gt: lastDate } },
+                { createdAt: lastDate, id: { gt: lastId ?? "" } },
+              ],
             },
-            orderBy: { createdAt: "asc" },
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
             include: {
               sender: { select: { id: true, name: true, image: true } },
             },
           });
 
           if (newMessages.length > 0) {
-            // Marque comme lus les messages reçus (pas les nôtres)
             const unread = newMessages
               .filter((m) => m.senderId !== session.user.id && !m.readAt)
               .map((m) => m.id);
@@ -106,11 +115,11 @@ export async function GET(req: NextRequest, { params }: Params) {
             }));
 
             send(controller, "messages", serialized);
-            lastDate = newMessages[newMessages.length - 1]!.createdAt;
+            const last = newMessages[newMessages.length - 1]!;
+            lastDate = last.createdAt;
+            lastId = last.id;
           }
-        } catch {
-          // Erreur DB transitoire — on continue la boucle
-        }
+        } catch {}
       }
 
       clearInterval(keepalive);
@@ -122,7 +131,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
-      "X-Accel-Buffering": "no", // désactive le buffering nginx
+      "X-Accel-Buffering": "no",
     },
   });
 }

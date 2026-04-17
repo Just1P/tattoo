@@ -19,7 +19,7 @@ const statusSchema = z.discriminatedUnion("status", [
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -38,19 +38,25 @@ export async function PATCH(
   });
 
   if (!artist) {
-    return NextResponse.json({ error: "Profil artiste introuvable" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Profil artiste introuvable" },
+      { status: 404 },
+    );
   }
 
   const booking = await prisma.booking.findUnique({ where: { id } });
 
   if (!booking || booking.artistId !== artist.id) {
-    return NextResponse.json({ error: "Réservation introuvable" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Réservation introuvable" },
+      { status: 404 },
+    );
   }
 
   if (booking.status !== "pending") {
     return NextResponse.json(
       { error: "Seules les demandes en attente peuvent être modifiées" },
-      { status: 409 }
+      { status: 409 },
     );
   }
 
@@ -58,14 +64,17 @@ export async function PATCH(
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Corps de requête JSON invalide" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Corps de requête JSON invalide" },
+      { status: 400 },
+    );
   }
 
   const parsed = statusSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Données invalides", details: parsed.error.issues },
-      { status: 422 }
+      { status: 422 },
     );
   }
 
@@ -75,7 +84,7 @@ export async function PATCH(
     if (new Date(data.startAt) >= new Date(data.endAt)) {
       return NextResponse.json(
         { error: "La date de fin doit être après la date de début" },
-        { status: 422 }
+        { status: 422 },
       );
     }
 
@@ -95,7 +104,6 @@ export async function PATCH(
     return NextResponse.json(updated);
   }
 
-  // cancelled
   const updated = await prisma.booking.update({
     where: { id },
     data: {

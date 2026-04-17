@@ -4,10 +4,10 @@ import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-// GET — liste des conversations de l'utilisateur connecté
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!session)
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const conversations = await prisma.conversation.findMany({
     where: {
@@ -25,7 +25,6 @@ export async function GET() {
     },
   });
 
-  // Compte les messages non lus par conversation
   const unreadCounts = await prisma.message.groupBy({
     by: ["conversationId"],
     where: {
@@ -37,7 +36,7 @@ export async function GET() {
   });
 
   const unreadMap = Object.fromEntries(
-    unreadCounts.map((r) => [r.conversationId, r._count.id])
+    unreadCounts.map((r) => [r.conversationId, r._count.id]),
   );
 
   const result = conversations.map((c) => ({
@@ -51,20 +50,23 @@ export async function GET() {
   return NextResponse.json(result);
 }
 
-// POST — créer ou retrouver une conversation avec un autre utilisateur
 const createSchema = z.object({
   recipientId: z.string().min(1),
 });
 
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!session)
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   let body;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Corps de requête JSON invalide" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Corps de requête JSON invalide" },
+      { status: 400 },
+    );
   }
 
   const parsed = createSchema.safeParse(body);
@@ -75,7 +77,10 @@ export async function POST(req: NextRequest) {
   const { recipientId } = parsed.data;
 
   if (recipientId === session.user.id) {
-    return NextResponse.json({ error: "Impossible de vous écrire à vous-même" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Impossible de vous écrire à vous-même" },
+      { status: 400 },
+    );
   }
 
   // Cherche une conversation existante entre ces deux utilisateurs
@@ -86,12 +91,7 @@ export async function POST(req: NextRequest) {
         { participants: { some: { userId: recipientId } } },
       ],
     },
-    include: {
-      participants: {
-        include: { user: { select: { id: true, name: true, image: true } } },
-      },
-      messages: { orderBy: { createdAt: "desc" }, take: 1 },
-    },
+    select: { id: true },
   });
 
   if (existing) {
@@ -106,5 +106,8 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ id: conversation.id, created: true }, { status: 201 });
+  return NextResponse.json(
+    { id: conversation.id, created: true },
+    { status: 201 },
+  );
 }

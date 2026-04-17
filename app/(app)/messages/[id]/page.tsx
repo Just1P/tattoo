@@ -36,17 +36,16 @@ export default async function ConversationPage({ params }: Props) {
 
   const [conversations, raw] = await Promise.all([
     getConversationsForUser(session.user.id),
-    // Charge les PAGE_SIZE derniers messages (ordre desc pour la pagination, puis inversé)
     prisma.message.findMany({
       where: { conversationId: id },
       orderBy: { createdAt: "desc" },
-      take: PAGE_SIZE,
+      take: PAGE_SIZE + 1,
       include: { sender: { select: { id: true, name: true, image: true } } },
     }),
   ]);
 
-  const messages = raw.reverse();
-  const hasMore = raw.length === PAGE_SIZE;
+  const hasMore = raw.length > PAGE_SIZE;
+  const messages = (hasMore ? raw.slice(0, PAGE_SIZE) : raw).reverse();
 
   const initialMessages = messages.map((m) => ({
     id: m.id,

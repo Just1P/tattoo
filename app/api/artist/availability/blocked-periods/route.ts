@@ -30,14 +30,17 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Corps de requête JSON invalide" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Corps de requête JSON invalide" },
+      { status: 400 },
+    );
   }
 
   const parsed = blockedPeriodSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Données invalides", details: parsed.error.issues },
-      { status: 422 }
+      { status: 422 },
     );
   }
 
@@ -46,13 +49,15 @@ export async function POST(req: NextRequest) {
   });
 
   if (!artist) {
-    return NextResponse.json({ error: "Profil artiste introuvable" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Profil artiste introuvable" },
+      { status: 404 },
+    );
   }
 
   const start = new Date(parsed.data.startDate);
   const end = new Date(parsed.data.endDate);
 
-  // Vérifie s'il existe déjà une période qui chevauche celle-ci
   const overlap = await prisma.blockedPeriod.findFirst({
     where: {
       artistId: artist.id,
@@ -64,7 +69,7 @@ export async function POST(req: NextRequest) {
   if (overlap) {
     return NextResponse.json(
       { error: "Cette période chevauche une période déjà bloquée" },
-      { status: 409 }
+      { status: 409 },
     );
   }
 

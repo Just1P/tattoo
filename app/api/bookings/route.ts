@@ -9,7 +9,10 @@ const bookingRequestSchema = z.object({
   tattooType: z.enum(["premier_rdv", "remplissage", "retouche"]),
   bodyPart: z.string().trim().min(1, "La zone est requise"),
   size: z.enum(["petit", "moyen", "grand", "tres_grand"]),
-  description: z.string().trim().min(10, "Décrivez votre projet en quelques mots"),
+  description: z
+    .string()
+    .trim()
+    .min(10, "Décrivez votre projet en quelques mots"),
   referenceUrls: z.array(z.url()).optional().default([]),
 });
 
@@ -24,14 +27,17 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Corps de requête JSON invalide" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Corps de requête JSON invalide" },
+      { status: 400 },
+    );
   }
 
   const parsed = bookingRequestSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Données invalides", details: parsed.error.issues },
-      { status: 422 }
+      { status: 422 },
     );
   }
 
@@ -43,15 +49,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Artiste introuvable" }, { status: 404 });
   }
 
-  // Un artiste ne peut pas se réserver lui-même
   if (artist.userId === session.user.id) {
     return NextResponse.json(
       { error: "Vous ne pouvez pas faire une demande à vous-même" },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
-  // Empêche une demande en doublon si une est déjà pending
   const existing = await prisma.booking.findFirst({
     where: {
       artistId: artist.id,
@@ -63,7 +67,7 @@ export async function POST(req: NextRequest) {
   if (existing) {
     return NextResponse.json(
       { error: "Vous avez déjà une demande en attente auprès de cet artiste" },
-      { status: 409 }
+      { status: 409 },
     );
   }
 

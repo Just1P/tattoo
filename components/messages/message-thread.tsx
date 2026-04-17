@@ -4,7 +4,13 @@ import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
 import { fr } from "date-fns/locale";
 import Image from "next/image";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { ImageIcon, Loader2, Send } from "lucide-react";
 import { useUploadThing } from "@/lib/uploadthing-client";
@@ -22,7 +28,6 @@ type Message = {
   createdAt: string;
   readAt: string | null;
   sender: Sender;
-  // présent uniquement sur les messages optimistes
   uploading?: boolean;
   localPreview?: string;
 };
@@ -44,14 +49,19 @@ type Props = {
   otherUser: { name: string | null; image: string | null } | null;
 };
 
-export function MessageThread({ conversationId, initialMessages, initialHasMore, currentUserId, otherUser }: Props) {
+export function MessageThread({
+  conversationId,
+  initialMessages,
+  initialHasMore,
+  currentUserId,
+  otherUser,
+}: Props) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loadingMore, setLoadingMore] = useState(false);
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
 
-  const isUploadingRef = useRef(false);
   const localPreviewUrlRef = useRef<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
@@ -61,16 +71,24 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
 
   const currentUser: Sender = { id: currentUserId, name: null, image: null };
 
-  // Scroll initial en bas — useLayoutEffect pour s'exécuter avant le paint
   useLayoutEffect(() => {
     const container = scrollContainerRef.current;
     if (container) container.scrollTop = container.scrollHeight;
   }, []);
 
-  // Scroll smooth à chaque nouveau message
   useEffect(() => {
+    return () => {
+      if (localPreviewUrlRef.current) {
+        URL.revokeObjectURL(localPreviewUrlRef.current);
+        localPreviewUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (loadingMore) return;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+  }, [messages.length, loadingMore]);
 
   function scrollToBottom() {
     requestAnimationFrame(() => {
@@ -78,30 +96,28 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
     });
   }
 
-  // Charge la page précédente de messages
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
 
-    // ID du plus ancien message non-optimiste pour le curseur
     const oldestReal = messages.find((m) => m.id !== OPTIMISTIC_ID);
     if (!oldestReal) return;
 
     setLoadingMore(true);
 
-    // Mémorise la hauteur avant d'insérer pour maintenir la position de scroll
     const container = scrollContainerRef.current;
     const scrollHeightBefore = container?.scrollHeight ?? 0;
 
     try {
       const res = await fetch(
-        `/api/conversations/${conversationId}/messages?cursor=${oldestReal.id}`
+        `/api/conversations/${conversationId}/messages?cursor=${oldestReal.id}`,
       );
       if (!res.ok) return;
 
-      const { messages: older, hasMore: moreAvailable } = await res.json() as {
-        messages: Message[];
-        hasMore: boolean;
-      };
+      const { messages: older, hasMore: moreAvailable } =
+        (await res.json()) as {
+          messages: Message[];
+          hasMore: boolean;
+        };
 
       setHasMore(moreAvailable);
       setMessages((prev) => {
@@ -110,20 +126,17 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
         return [...fresh, ...prev];
       });
 
-      // Restaure la position de scroll après le rendu
       requestAnimationFrame(() => {
         if (container) {
           container.scrollTop = container.scrollHeight - scrollHeightBefore;
         }
       });
     } catch {
-      // silencieux
     } finally {
       setLoadingMore(false);
     }
   }, [conversationId, hasMore, loadingMore, messages]);
 
-  // IntersectionObserver sur le sentinel en haut pour déclencher loadMore
   useEffect(() => {
     const sentinel = topSentinelRef.current;
     if (!sentinel) return;
@@ -132,15 +145,13 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
       (entries) => {
         if (entries[0]?.isIntersecting) loadMore();
       },
-      { root: scrollContainerRef.current, threshold: 0.1 }
+      { root: scrollContainerRef.current, threshold: 0.1 },
     );
 
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [loadMore]);
 
-  // SSE — reçoit les nouveaux messages en temps réel
-  // afterId = ID du dernier message connu, pour que le serveur ne renvoie que la suite
   useEffect(() => {
     const lastId = messages.filter((m) => m.id !== OPTIMISTIC_ID).at(-1)?.id;
     const url = `/api/conversations/${conversationId}/stream${lastId ? `?afterId=${lastId}` : ""}`;
@@ -158,13 +169,10 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
       });
     });
 
-    es.onerror = () => {
-      // Le navigateur reconnecte automatiquement — pas besoin d'intervention
-    };
+    es.onerror = () => {};
 
     return () => es.close();
-  // On recrée l'EventSource uniquement si la conversation change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId]);
 
   const { startUpload, isUploading } = useUploadThing("messageImage", {
@@ -173,29 +181,30 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
       if (!url) return;
 
       try {
-        const res = await fetch(`/api/conversations/${conversationId}/messages`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageUrl: url }),
-        });
+        const res = await fetch(
+          `/api/conversations/${conversationId}/messages`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageUrl: url }),
+          },
+        );
 
         if (!res.ok) throw new Error();
 
         const message: Message = await res.json();
 
-        // Remplace le message optimiste en conservant localPreview jusqu'au onLoad de l'image
         setMessages((prev) =>
           prev.map((m) =>
             m.id === OPTIMISTIC_ID
               ? { ...message, localPreview: m.localPreview }
-              : m
-          )
+              : m,
+          ),
         );
       } catch {
         toast.error("Erreur lors de l'envoi de l'image");
         setMessages((prev) => prev.filter((m) => m.id !== OPTIMISTIC_ID));
       } finally {
-        isUploadingRef.current = false;
       }
     },
     onUploadError: () => {
@@ -205,7 +214,6 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
         localPreviewUrlRef.current = null;
       }
       setMessages((prev) => prev.filter((m) => m.id !== OPTIMISTIC_ID));
-      isUploadingRef.current = false;
     },
   });
 
@@ -244,7 +252,6 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
     if (!file) return;
     const localPreview = URL.createObjectURL(file);
     localPreviewUrlRef.current = localPreview;
-    isUploadingRef.current = true;
 
     const optimistic: Message = {
       id: OPTIMISTIC_ID,
@@ -291,7 +298,10 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
       </div>
 
       {/* Messages */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-1">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto px-5 py-4 space-y-1"
+      >
         {/* Sentinel en haut + indicateur de chargement */}
         <div ref={topSentinelRef} className="h-1" />
         {loadingMore && (
@@ -320,7 +330,7 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
               className={cn(
                 "flex items-end gap-2",
                 isMine ? "flex-row-reverse" : "flex-row",
-                !isLastInGroup && "mb-0.5"
+                !isLastInGroup && "mb-0.5",
               )}
             >
               {/* Avatar */}
@@ -347,7 +357,8 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
               <div className="flex flex-col max-w-[65%]">
                 {!isMine && isFirstInGroup && (
                   <p className="text-[11px] text-muted-foreground mb-1 ml-1">
-                    {msg.sender.name ?? "Utilisateur"}, {formatMessageDate(msg.createdAt)}
+                    {msg.sender.name ?? "Utilisateur"},{" "}
+                    {formatMessageDate(msg.createdAt)}
                   </p>
                 )}
                 {isMine && isFirstInGroup && (
@@ -384,8 +395,10 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
                           }
                           setMessages((prev) =>
                             prev.map((m) =>
-                              m.id === msg.id ? { ...m, localPreview: undefined } : m
-                            )
+                              m.id === msg.id
+                                ? { ...m, localPreview: undefined }
+                                : m,
+                            ),
                           );
                         }}
                       />
@@ -416,8 +429,19 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
                           fill="none"
                           viewBox="0 0 24 24"
                         >
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                          />
                         </svg>
                       </div>
                     )}
@@ -431,17 +455,19 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
                             "bg-primary text-primary-foreground",
                             "rounded-[20px]",
                             !isLastInGroup && "rounded-br-md",
-                            !isFirstInGroup && "rounded-tr-md"
+                            !isFirstInGroup && "rounded-tr-md",
                           )
                         : cn(
                             "bg-muted text-foreground",
                             "rounded-[20px]",
                             !isLastInGroup && "rounded-bl-md",
-                            !isFirstInGroup && "rounded-tl-md"
-                          )
+                            !isFirstInGroup && "rounded-tl-md",
+                          ),
                     )}
                   >
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                    <p className="whitespace-pre-wrap break-words">
+                      {msg.content}
+                    </p>
                   </div>
                 )}
               </div>
@@ -477,7 +503,9 @@ export function MessageThread({ conversationId, initialMessages, initialHasMore,
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isUploading ? "Envoi de l'image…" : "Écrire un message…"}
+            placeholder={
+              isUploading ? "Envoi de l'image…" : "Écrire un message…"
+            }
             disabled={isUploading}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />

@@ -59,8 +59,10 @@ const SIZE_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<BookingStatus, string> = {
-  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  confirmed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  pending:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  confirmed:
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
@@ -70,7 +72,6 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
   cancelled: "Annulé",
 };
 
-// Génère des créneaux de 30 min de 07:00 à 22:00
 function generateTimeOptions(): string[] {
   const options: string[] = [];
   for (let h = 7; h <= 22; h++) {
@@ -103,7 +104,6 @@ export function BookingCard({ booking, onStatusChange }: Props) {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Reset du formulaire à chaque changement d'action pour éviter de mélanger les états
   useEffect(() => {
     setDate(undefined);
     setStartTime("09:00");
@@ -137,10 +137,8 @@ export function BookingCard({ booking, onStatusChange }: Props) {
         toast.error(data.error ?? "Erreur lors de la confirmation");
         return;
       }
-      // Met à jour le booking complet avec les données retournées par l'API
       const updated = await res.json();
       onStatusChange(booking.id, "confirmed");
-      // Propage les champs mis à jour (startAt, endAt, artistNote) via la callback
       Object.assign(booking, updated);
       toast.success("Réservation confirmée");
       setAction(null);
@@ -189,9 +187,11 @@ export function BookingCard({ booking, onStatusChange }: Props) {
             </p>
             <p className="text-xs text-muted-foreground">
               {booking.tattooType
-                ? TATTOO_TYPE_LABELS[booking.tattooType] ?? booking.tattooType
+                ? (TATTOO_TYPE_LABELS[booking.tattooType] ?? booking.tattooType)
                 : "Type non précisé"}
-              {booking.size ? ` · ${SIZE_LABELS[booking.size] ?? booking.size}` : ""}
+              {booking.size
+                ? ` · ${SIZE_LABELS[booking.size] ?? booking.size}`
+                : ""}
             </p>
           </div>
         </div>
@@ -199,7 +199,7 @@ export function BookingCard({ booking, onStatusChange }: Props) {
           <span
             className={cn(
               "rounded-full px-2.5 py-0.5 text-xs font-medium",
-              STATUS_STYLES[booking.status]
+              STATUS_STYLES[booking.status],
             )}
           >
             {STATUS_LABELS[booking.status]}
@@ -229,7 +229,11 @@ export function BookingCard({ booking, onStatusChange }: Props) {
             {booking.startAt && (
               <div className="sm:col-span-2">
                 <span className="text-muted-foreground">Créneau : </span>
-                {format(new Date(booking.startAt), "EEEE d MMMM yyyy 'de' HH:mm", { locale: fr })}
+                {format(
+                  new Date(booking.startAt),
+                  "EEEE d MMMM yyyy 'de' HH:mm",
+                  { locale: fr },
+                )}
                 {" → "}
                 {booking.endAt
                   ? format(new Date(booking.endAt), "HH:mm", { locale: fr })
@@ -301,7 +305,7 @@ export function BookingCard({ booking, onStatusChange }: Props) {
                       variant="outline"
                       className={cn(
                         "w-48 justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
+                        !date && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 size-4" />
