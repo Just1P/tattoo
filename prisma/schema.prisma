@@ -54,6 +54,7 @@ model User {
   lastName      String?
   name          String?
   role          UserRole @default(client)
+  roleSelected  Boolean  @default(false)
   avatarUrl     String?
   description   String?
   image         String?

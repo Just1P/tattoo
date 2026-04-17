@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { lastLoginMethod } from "better-auth/plugins";
 import { headers } from "next/headers";
 import { prisma } from "./prisma";
 
@@ -30,11 +31,22 @@ export const auth = betterAuth({
       },
     },
   },
+  plugins: [lastLoginMethod()],
   databaseHooks: {
     user: {
       create: {
         after: async (user) => {
-          if ((user as { role?: UserRole }).role !== "artist") return;
+          const typedUser = user as { role?: UserRole; passwordHash?: string | null };
+
+          // Les comptes créés via email ont un passwordHash : le rôle a été choisi explicitement
+          if (typedUser.passwordHash) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { roleSelected: true },
+            });
+          }
+
+          if (typedUser.role !== "artist") return;
           await prisma.tattooArtist.upsert({
             where: { userId: user.id },
             update: {},
