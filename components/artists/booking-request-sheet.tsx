@@ -20,9 +20,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { AuthRequiredModal } from "@/components/auth/auth-required-modal";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -46,9 +46,9 @@ const SIZES = [
 
 export function BookingRequestSheet({ artistId, artistName }: Props) {
   const { data: session, isPending } = useSession();
-  const router = useRouter();
 
   const [open, setOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [tattooType, setTattooType] = useState("");
@@ -58,7 +58,7 @@ export function BookingRequestSheet({ artistId, artistName }: Props) {
 
   function handleOpenChange(value: boolean) {
     if (value && !session?.user) {
-      router.push("/login");
+      setShowAuthModal(true);
       return;
     }
     setOpen(value);
@@ -104,6 +104,12 @@ export function BookingRequestSheet({ artistId, artistName }: Props) {
   }
 
   return (
+    <>
+    <AuthRequiredModal
+      open={showAuthModal}
+      onClose={() => setShowAuthModal(false)}
+      reason="pour envoyer une demande de rendez-vous"
+    />
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button disabled={isPending}>Demander un RDV</Button>
@@ -189,5 +195,6 @@ export function BookingRequestSheet({ artistId, artistName }: Props) {
         </form>
       </SheetContent>
     </Sheet>
+    </>
   );
 }
