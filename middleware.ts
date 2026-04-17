@@ -27,9 +27,9 @@ export function middleware(req: NextRequest) {
 
   const isAuthenticated = !!sessionToken;
 
-  // Utilisateur connecté qui tente d'accéder à /login ou /register → dashboard
+  // Utilisateur connecté qui tente d'accéder à /login ou /register → accueil
   if (isAuthenticated && AUTH_ROUTES.includes(pathname)) {
-    return NextResponse.redirect(new URL("/dashboard/portfolio", req.url));
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   // Utilisateur non connecté sur une route protégée → /login
@@ -53,6 +53,6 @@ export const config = {
      * - routes API d'auth Better Auth
      * - routes uploadthing
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|api/auth|api/uploadthing|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)",
+    "/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)",
   ],
 };
