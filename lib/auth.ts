@@ -1,6 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { headers } from "next/headers";
 import { prisma } from "./prisma";
+
+export type UserRole = "client" | "artist" | "admin";
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
@@ -31,7 +34,7 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          if ((user as { role?: string }).role !== "artist") return;
+          if ((user as { role?: UserRole }).role !== "artist") return;
           await prisma.tattooArtist.upsert({
             where: { userId: user.id },
             update: {},
@@ -42,3 +45,12 @@ export const auth = betterAuth({
     },
   },
 });
+
+type SessionWithRole = Awaited<ReturnType<typeof auth.api.getSession>> & {
+  user: { role: UserRole };
+} | null;
+
+export async function getSession(): Promise<SessionWithRole> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  return session as SessionWithRole;
+}

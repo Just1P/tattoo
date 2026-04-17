@@ -1,5 +1,4 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSession } from "@/lib/auth";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 
 const f = createUploadthing();
@@ -13,7 +12,7 @@ export const ourFileRouter = {
     },
   })
     .middleware(async () => {
-      const session = await auth.api.getSession({ headers: await headers() });
+      const session = await getSession();
       if (!session) throw new Error("Non authentifié");
       return { userId: session.user.id };
     })
@@ -29,10 +28,10 @@ export const ourFileRouter = {
     },
   })
     .middleware(async () => {
-      const session = await auth.api.getSession({ headers: await headers() });
+      const session = await getSession();
 
       if (!session) throw new Error("Non authentifié");
-      if ((session.user as { role?: string }).role !== "artist")
+      if (session.user.role !== "artist")
         throw new Error("Accès interdit");
 
       return { userId: session.user.id };

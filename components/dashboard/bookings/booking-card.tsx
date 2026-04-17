@@ -84,10 +84,10 @@ function generateTimeOptions(): string[] {
 const TIME_OPTIONS = generateTimeOptions();
 
 function combineDateAndTime(date: Date, time: string): Date {
-  const [hours, minutes] = time.split(":").map(Number);
-  const result = new Date(date);
-  result.setHours(hours, minutes, 0, 0);
-  return result;
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return new Date(`${yyyy}-${mm}-${dd}T${time}:00`);
 }
 
 type Props = {
@@ -116,7 +116,7 @@ export function BookingCard({ booking, onStatusChange }: Props) {
       toast.error("Choisissez une date");
       return;
     }
-    if (startTime >= endTime) {
+    if (combineDateAndTime(date, startTime) >= combineDateAndTime(date, endTime)) {
       toast.error("L'heure de fin doit être après l'heure de début");
       return;
     }
@@ -137,9 +137,8 @@ export function BookingCard({ booking, onStatusChange }: Props) {
         toast.error(data.error ?? "Erreur lors de la confirmation");
         return;
       }
-      const updated = await res.json();
+      await res.json();
       onStatusChange(booking.id, "confirmed");
-      Object.assign(booking, updated);
       toast.success("Réservation confirmée");
       setAction(null);
     } finally {

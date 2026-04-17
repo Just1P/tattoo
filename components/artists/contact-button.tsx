@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthRequiredModal } from "@/components/auth/auth-required-modal";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -14,10 +15,11 @@ export function ContactButton({ artistUserId }: Props) {
   const { data: session, isPending } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   async function handleContact() {
     if (!session?.user) {
-      router.push("/login");
+      setShowAuthModal(true);
       return;
     }
 
@@ -43,8 +45,16 @@ export function ContactButton({ artistUserId }: Props) {
   }
 
   return (
-    <Button variant="outline" onClick={handleContact} disabled={isPending || loading}>
-      Contacter
-    </Button>
+    <>
+      <Button variant="outline" onClick={handleContact} disabled={isPending || loading}>
+        Contacter
+      </Button>
+
+      <AuthRequiredModal
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        reason="pour contacter cet artiste"
+      />
+    </>
   );
 }

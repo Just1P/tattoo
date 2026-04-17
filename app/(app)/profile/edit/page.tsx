@@ -9,7 +9,7 @@ export default async function ProfileEditPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
 
-  const isArtist = (session.user as { role?: string }).role === "artist";
+  const isArtist = session.user.role === "artist";
 
   const [user, artistData, styles] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),

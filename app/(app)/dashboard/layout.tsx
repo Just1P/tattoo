@@ -10,7 +10,7 @@ export default async function DashboardLayout({
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) redirect("/login");
-  if ((session.user as { role?: string }).role !== "artist") redirect("/");
+  if (session.user.role !== "artist") redirect("/");
 
   return <>{children}</>;
 }

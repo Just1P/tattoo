@@ -11,7 +11,7 @@ export default async function NewTattooPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) redirect("/login");
-  if ((session.user as { role?: string }).role !== "artist") redirect("/");
+  if (session.user.role !== "artist") redirect("/");
 
   const [artist, styles] = await Promise.all([
     prisma.tattooArtist.findUnique({ where: { userId: session.user.id } }),
