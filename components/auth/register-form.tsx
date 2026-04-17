@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { RecentBadge, useLastLoginMethod } from "@/components/profile/last-login-badge";
 import { signIn, signUp } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 
@@ -41,6 +42,7 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const router = useRouter();
+  const lastMethod = useLastLoginMethod();
   const [role, setRole] = useState<"client" | "artist">("client");
 
   const {
@@ -184,9 +186,12 @@ export function RegisterForm() {
               </Typography>
             )}
           </div>
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Création..." : "Créer mon compte"}
-          </Button>
+          <div className="relative w-full">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Création..." : "Créer mon compte"}
+            </Button>
+            {lastMethod === "email" && <RecentBadge />}
+          </div>
         </form>
 
         <div className="relative my-4 flex items-center gap-3">
@@ -195,6 +200,7 @@ export function RegisterForm() {
           <Separator className="flex-1" />
         </div>
 
+        <div className="relative w-full">
         <Button
           variant="outline"
           className="w-full"
@@ -213,6 +219,8 @@ export function RegisterForm() {
           </svg>
           S&apos;inscrire avec Google
         </Button>
+          {lastMethod === "google" && <RecentBadge />}
+        </div>
       </CardContent>
       <CardFooter className="justify-center">
         <Typography tag="span" color="muted">
