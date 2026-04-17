@@ -252,7 +252,8 @@ model Message {
   id             String    @id @default(uuid())
   conversationId String
   senderId       String
-  content        String
+  content        String?
+  imageUrl       String?   @db.VarChar(500)
   readAt         DateTime?
   createdAt      DateTime  @default(now())
 

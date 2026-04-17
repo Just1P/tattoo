@@ -47,7 +47,6 @@ const DAYS: DayOfWeek[] = [
   "SUNDAY",
 ];
 
-// Génère les créneaux de 30 min de 07:00 à 22:00
 function generateTimeOptions(): string[] {
   const options: string[] = [];
   for (let h = 7; h <= 22; h++) {
@@ -94,7 +93,7 @@ export function WeeklySchedule({ initialSlots }: Props) {
         [...prev, slot].sort((a, b) => {
           const di = DAYS.indexOf(a.day) - DAYS.indexOf(b.day);
           return di !== 0 ? di : a.startTime.localeCompare(b.startTime);
-        })
+        }),
       );
       setAdding(null);
       setStartTime(DEFAULT_START);

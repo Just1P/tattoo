@@ -46,7 +46,7 @@ export default async function ArtistPublicPage({ params }: Props) {
               artistId={artist.id}
               artistName={artist.artistName}
             />
-            <ContactButton artistId={artist.id} />
+            <ContactButton artistUserId={artist.userId} />
           </div>
         </div>
 
