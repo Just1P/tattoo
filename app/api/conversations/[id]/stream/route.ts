@@ -119,7 +119,9 @@ export async function GET(req: NextRequest, { params }: Params) {
             lastDate = last.createdAt;
             lastId = last.id;
           }
-        } catch {}
+        } catch (err) {
+          console.error("[stream] poll error:", err);
+        }
       }
 
       clearInterval(keepalive);

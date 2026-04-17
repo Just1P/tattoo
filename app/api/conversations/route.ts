@@ -83,6 +83,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const recipient = await prisma.user.findUnique({ where: { id: recipientId } });
+  if (!recipient) {
+    return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+  }
+
   // Cherche une conversation existante entre ces deux utilisateurs
   const existing = await prisma.conversation.findFirst({
     where: {
