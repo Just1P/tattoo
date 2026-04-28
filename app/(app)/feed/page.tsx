@@ -4,8 +4,7 @@ import Typography from "@/components/custom/Typography";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { getAllStyles } from "@/lib/artist-queries";
-import { getPublicTattoos } from "@/lib/tattoo-queries";
-import { prisma } from "@/lib/prisma";
+import { getFavoritedTattooIds, getPublicTattoos } from "@/lib/tattoo-queries";
 import { headers } from "next/headers";
 import Link from "next/link";
 
@@ -23,15 +22,9 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
     getAllStyles(),
   ]);
 
-  const favoritedTattooIds =
-    session && tattoos.length > 0
-      ? await prisma.favoriteTattoo
-          .findMany({
-            where: { userId: session.user.id, tattooId: { in: tattoos.map((t) => t.id) } },
-            select: { tattooId: true },
-          })
-          .then((rows) => new Set(rows.map((r) => r.tattooId)))
-      : new Set<string>();
+  const favoritedTattooIds = session
+    ? await getFavoritedTattooIds(session.user.id, tattoos.map((t) => t.id))
+    : new Set<string>();
 
   function buildPageUrl(p: number) {
     const ps = new URLSearchParams();

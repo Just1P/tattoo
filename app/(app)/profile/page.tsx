@@ -3,7 +3,7 @@ import Typography from "@/components/custom/Typography";
 import { ShareButton } from "@/components/profile/share-button";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getProfileData } from "@/lib/user-queries";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,27 +13,7 @@ export default async function ProfilePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      artistProfile: {
-        include: {
-          tattoos: {
-            orderBy: [{ pinned: "desc" }, { position: "asc" }],
-            include: { style: { select: { name: true } } },
-          },
-        },
-      },
-      favoriteTattoos: {
-        include: {
-          tattoo: {
-            include: { style: { select: { name: true } } },
-          },
-        },
-      },
-      followedArtists: { select: { id: true } },
-    },
-  });
+  const user = await getProfileData(session.user.id);
 
   if (!user) redirect("/login");
 

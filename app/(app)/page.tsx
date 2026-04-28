@@ -4,8 +4,7 @@ import Typography from "@/components/custom/Typography";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { getFilteredArtists } from "@/lib/artist-queries";
-import { getPublicTattoos } from "@/lib/tattoo-queries";
-import { prisma } from "@/lib/prisma";
+import { getFavoritedTattooIds, getPublicTattoos } from "@/lib/tattoo-queries";
 import { headers } from "next/headers";
 import Link from "next/link";
 
@@ -22,13 +21,8 @@ export default async function HomePage() {
 
   const previewTattoos = tattoos.slice(0, 8);
 
-  const favoritedTattooIds = session && previewTattoos.length > 0
-    ? await prisma.favoriteTattoo
-        .findMany({
-          where: { userId: session.user.id, tattooId: { in: previewTattoos.map((t) => t.id) } },
-          select: { tattooId: true },
-        })
-        .then((rows) => new Set(rows.map((r) => r.tattooId)))
+  const favoritedTattooIds = session
+    ? await getFavoritedTattooIds(session.user.id, previewTattoos.map((t) => t.id))
     : new Set<string>();
   const previewArtists = artists.slice(0, 6);
 

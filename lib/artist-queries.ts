@@ -26,9 +26,7 @@ export async function getFilteredArtists(filters: ArtistFilters = {}) {
       ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
     },
     include: {
-      artistStyles: {
-        include: { style: { select: { id: true, name: true } } },
-      },
+      artistStyles: { include: styleInclude },
       _count: { select: { tattoos: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -75,6 +73,22 @@ export async function getArtistPageData(id: string, userId?: string) {
   ]);
 
   return { artist, isFollowed, favoritedTattooIds };
+}
+
+export async function getFollowedArtists(userId: string) {
+  const followed = await prisma.artistFollower.findMany({
+    where: { userId },
+    include: {
+      artist: {
+        include: {
+          artistStyles: { include: styleInclude },
+          _count: { select: { tattoos: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return followed.map(({ artist }) => artist);
 }
 
 export async function getAllPublicArtistIds() {

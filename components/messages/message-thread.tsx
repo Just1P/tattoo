@@ -132,6 +132,7 @@ export function MessageThread({
         }
       });
     } catch {
+      toast.error("Erreur lors du chargement des messages");
     } finally {
       setLoadingMore(false);
     }

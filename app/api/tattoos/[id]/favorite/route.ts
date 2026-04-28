@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -20,7 +21,7 @@ export async function POST(_req: Request, { params }: { params: Params }) {
 
     return NextResponse.json({ success: true });
   } catch (e) {
-    if (e && typeof e === "object" && "code" in e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
       if (e.code === "P2002") {
         return NextResponse.json({ error: "Tatouage déjà en favoris" }, { status: 409 });
       }

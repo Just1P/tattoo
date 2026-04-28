@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { AuthRequiredModal } from "@/components/auth/auth-required-modal";
+import { SIZES, TATTOO_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth-client";
 import { useState } from "react";
@@ -31,18 +32,6 @@ type Props = {
   artistName: string | null;
 };
 
-const TATTOO_TYPES = [
-  { value: "premier_rdv", label: "Premier rendez-vous" },
-  { value: "remplissage", label: "Remplissage" },
-  { value: "retouche", label: "Retouche" },
-];
-
-const SIZES = [
-  { value: "petit", label: "Petit (moins de 5 cm)" },
-  { value: "moyen", label: "Moyen (5 à 15 cm)" },
-  { value: "grand", label: "Grand (15 à 30 cm)" },
-  { value: "tres_grand", label: "Très grand (plus de 30 cm)" },
-];
 
 export function BookingRequestSheet({ artistId, artistName }: Props) {
   const { data: session, isPending } = useSession();
