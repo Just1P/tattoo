@@ -36,6 +36,7 @@ export default async function ClientBookingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) redirect("/login");
+  if (session.user.role !== "client") redirect("/");
 
   const bookings = await prisma.booking.findMany({
     where: { userId: session.user.id },
