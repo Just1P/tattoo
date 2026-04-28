@@ -5,8 +5,7 @@ import { ContactButton } from "@/components/artists/contact-button";
 import { FollowButton } from "@/components/artists/follow-button";
 import Typography from "@/components/custom/Typography";
 import { auth } from "@/lib/auth";
-import { getAllPublicArtistIds, getPublicArtist } from "@/lib/artist-queries";
-import { prisma } from "@/lib/prisma";
+import { getAllPublicArtistIds, getArtistPageData } from "@/lib/artist-queries";
 import { headers } from "next/headers";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -25,19 +24,7 @@ export default async function ArtistPublicPage({ params }: Props) {
   const requestHeaders = await headers();
   const session = await auth.api.getSession({ headers: requestHeaders });
 
-  const [artist, isFollowed, favoritedTattooIds] = await Promise.all([
-    getPublicArtist(id),
-    session
-      ? prisma.artistFollower
-          .findUnique({ where: { artistId_userId: { artistId: id, userId: session.user.id } } })
-          .then(Boolean)
-      : Promise.resolve(false),
-    session
-      ? prisma.favoriteTattoo
-          .findMany({ where: { userId: session.user.id, tattoo: { artistId: id } }, select: { tattooId: true } })
-          .then((rows) => rows.map((r) => r.tattooId))
-      : Promise.resolve(undefined),
-  ]);
+  const { artist, isFollowed, favoritedTattooIds } = await getArtistPageData(id, session?.user.id);
 
   if (!artist) notFound();
 
