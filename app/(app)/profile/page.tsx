@@ -31,12 +31,15 @@ export default async function ProfilePage() {
           },
         },
       },
+      followedArtists: { select: { id: true } },
     },
   });
 
   if (!user) redirect("/login");
 
   const isArtist = !!user.artistProfile;
+  const followingCount = user.followedArtists.length;
+  const favoritedTattooIds = user.favoriteTattoos.map((f) => f.tattooId);
 
   return (
     <main className="px-4 py-12">
@@ -84,6 +87,12 @@ export default async function ProfilePage() {
           </Typography>
         )}
 
+        <Link href="/following" className="hover:underline">
+          <Typography tag="p" color="muted" align="center">
+            <span className="font-semibold text-foreground">{followingCount}</span>{" "}
+            artiste{followingCount !== 1 ? "s" : ""} suivi{followingCount !== 1 ? "s" : ""}
+          </Typography>
+        </Link>
 
         <div className="flex gap-3">
           <Button asChild size="lg">
@@ -117,6 +126,7 @@ export default async function ProfilePage() {
             ) : (
               <ArtistPortfolioGrid
                 tattoos={user.favoriteTattoos.map((f) => f.tattoo)}
+                favoritedTattooIds={favoritedTattooIds}
               />
             )}
           </>
