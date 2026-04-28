@@ -15,12 +15,31 @@ import { BookOpen, CalendarDays, Images, LayoutDashboard, LogIn, LogOut, Message
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function AppSidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const role = (session?.user as { role?: string } | undefined)?.role;
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!session?.user) return;
+
+    async function fetchUnread() {
+      const res = await fetch("/api/me/unread-count");
+      if (res.ok) {
+        const { count } = await res.json();
+        setUnreadCount(count);
+      }
+    }
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [session?.user, pathname]);
 
   async function handleSignOut() {
     await signOut();
@@ -73,7 +92,14 @@ export function AppSidebar() {
                   tooltip={label}
                 >
                   <Link href={href}>
-                    <Icon />
+                    <div className="relative">
+                      <Icon />
+                      {href === "/messages" && unreadCount > 0 && (
+                        <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                    </div>
                     <span>{label}</span>
                   </Link>
                 </SidebarMenuButton>
