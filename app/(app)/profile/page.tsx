@@ -84,6 +84,7 @@ export default async function ProfilePage() {
           </Typography>
         )}
 
+
         <div className="flex gap-3">
           <Button asChild size="lg">
             <Link href="/profile/edit">Modifier</Link>
