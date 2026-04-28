@@ -12,6 +12,7 @@ type ArtistProfileHeaderProps = {
   instagramUrl: string | null;
   verified: "pending" | "approved" | "rejected";
   styles: { id: string; name: string }[];
+  followersCount: number;
 };
 
 function safeInstagramUrl(url: string): string | null {
@@ -34,6 +35,7 @@ export function ArtistProfileHeader({
   instagramUrl,
   verified,
   styles,
+  followersCount,
 }: ArtistProfileHeaderProps) {
   const priceLabel = formatHourlyRateRange(priceMin, priceMax);
   const safeUrl = instagramUrl ? safeInstagramUrl(instagramUrl) : null;
@@ -67,6 +69,9 @@ export function ArtistProfileHeader({
             {priceLabel}
           </Typography>
         )}
+        <Typography tag="span" color="muted">
+          {followersCount} abonné{followersCount !== 1 ? "s" : ""}
+        </Typography>
         {safeUrl && (
           <a
             href={safeUrl}

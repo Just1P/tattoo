@@ -58,6 +58,7 @@ export default async function ArtistPublicPage({ params }: Props) {
             instagramUrl={artist.instagramUrl}
             verified={artist.verified}
             styles={styles}
+            followersCount={artist.followersCount}
           />
           <div className="flex gap-3">
             <BookingRequestSheet
