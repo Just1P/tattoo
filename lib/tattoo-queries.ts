@@ -8,7 +8,8 @@ export type TattooFeedFilters = {
 };
 
 export async function getPublicTattoos(filters: TattooFeedFilters = {}) {
-  const { styleSlug, page = 1 } = filters;
+  const { styleSlug } = filters;
+  const page = Math.max(1, Math.floor(filters.page ?? 1) || 1);
 
   const where = {
     artist: { verified: "approved" as const },
@@ -32,7 +33,7 @@ export async function getPublicTattoos(filters: TattooFeedFilters = {}) {
   return {
     tattoos,
     totalCount,
-    totalPages: Math.ceil(totalCount / PAGE_SIZE),
+    totalPages: Math.max(1, Math.ceil(totalCount / PAGE_SIZE)),
     currentPage: page,
   };
 }

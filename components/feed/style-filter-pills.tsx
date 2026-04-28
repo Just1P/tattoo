@@ -16,7 +16,8 @@ export function StyleFilterPills({ styles, activeSlug }: { styles: Style[]; acti
       params.delete("styleSlug");
     }
     params.delete("page");
-    router.push(`/feed?${params.toString()}`);
+    const qs = params.toString();
+    router.push(qs ? `/feed?${qs}` : "/feed");
   }
 
   const pillClass = (active: boolean) =>

@@ -14,19 +14,24 @@ type SearchParams = Promise<{ styleSlug?: string; page?: string }>;
 export default async function FeedPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const styleSlug = params.styleSlug ?? "";
-  const page = params.page ? parseInt(params.page) : 1;
+  const page = Math.max(1, parseInt(params.page ?? "1") || 1);
 
   const session = await auth.api.getSession({ headers: await headers() });
 
-  const [{ tattoos, totalPages, currentPage }, styles, favoritedTattooIds] = await Promise.all([
+  const [{ tattoos, totalPages, currentPage }, styles] = await Promise.all([
     getPublicTattoos({ styleSlug: styleSlug || undefined, page }),
     getAllStyles(),
-    session
-      ? prisma.favoriteTattoo
-          .findMany({ where: { userId: session.user.id }, select: { tattooId: true } })
-          .then((rows) => new Set(rows.map((r) => r.tattooId)))
-      : Promise.resolve(new Set<string>()),
   ]);
+
+  const favoritedTattooIds =
+    session && tattoos.length > 0
+      ? await prisma.favoriteTattoo
+          .findMany({
+            where: { userId: session.user.id, tattooId: { in: tattoos.map((t) => t.id) } },
+            select: { tattooId: true },
+          })
+          .then((rows) => new Set(rows.map((r) => r.tattooId)))
+      : new Set<string>();
 
   function buildPageUrl(p: number) {
     const ps = new URLSearchParams();
@@ -53,7 +58,7 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
         </Typography>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {tattoos.map((tattoo) => (
+          {tattoos.map((tattoo, index) => (
             <TattooFeedCard
               key={tattoo.id}
               id={tattoo.id}
@@ -62,6 +67,7 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
               style={tattoo.style}
               artist={tattoo.artist}
               isFavorited={favoritedTattooIds.has(tattoo.id)}
+              priority={index < 4}
             />
           ))}
         </div>
