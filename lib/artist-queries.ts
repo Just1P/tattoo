@@ -4,6 +4,39 @@ const tattooOrderBy = [{ pinned: "desc" as const }, { position: "asc" as const }
 const tattooInclude = { style: { select: { name: true } } };
 const styleInclude = { style: { select: { id: true, name: true } } };
 
+export type ArtistFilters = {
+  search?: string;
+  city?: string;
+  styleSlug?: string;
+  minPrice?: number;
+  maxPrice?: number;
+};
+
+export async function getFilteredArtists(filters: ArtistFilters = {}) {
+  const { search, city, styleSlug, minPrice, maxPrice } = filters;
+  return prisma.tattooArtist.findMany({
+    where: {
+      artistName: { not: null, ...(search ? { contains: search, mode: "insensitive" } : {}) },
+      verified: "approved",
+      ...(city ? { city: { contains: city, mode: "insensitive" } } : {}),
+      ...(styleSlug ? { artistStyles: { some: { style: { slug: styleSlug } } } } : {}),
+      ...(minPrice !== undefined ? { priceMin: { gte: minPrice } } : {}),
+      ...(maxPrice !== undefined ? { priceMax: { lte: maxPrice } } : {}),
+    },
+    include: {
+      artistStyles: {
+        include: { style: { select: { id: true, name: true } } },
+      },
+      _count: { select: { tattoos: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getAllStyles() {
+  return prisma.style.findMany({ orderBy: { name: "asc" } });
+}
+
 export async function getPublicArtist(id: string) {
   return prisma.tattooArtist.findFirst({
     where: { id, verified: "approved" },
