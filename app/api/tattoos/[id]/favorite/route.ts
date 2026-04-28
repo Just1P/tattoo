@@ -19,8 +19,16 @@ export async function POST(_req: Request, { params }: { params: Params }) {
     });
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Tatouage déjà en favoris" }, { status: 409 });
+  } catch (e) {
+    if (e && typeof e === "object" && "code" in e) {
+      if (e.code === "P2002") {
+        return NextResponse.json({ error: "Tatouage déjà en favoris" }, { status: 409 });
+      }
+      if (e.code === "P2025") {
+        return NextResponse.json({ error: "Tatouage introuvable" }, { status: 404 });
+      }
+    }
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 

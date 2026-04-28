@@ -34,7 +34,7 @@ export default async function ArtistPublicPage({ params }: Props) {
       : Promise.resolve(false),
     session
       ? prisma.favoriteTattoo
-          .findMany({ where: { userId: session.user.id }, select: { tattooId: true } })
+          .findMany({ where: { userId: session.user.id, tattoo: { artistId: id } }, select: { tattooId: true } })
           .then((rows) => rows.map((r) => r.tattooId))
       : Promise.resolve(undefined),
   ]);

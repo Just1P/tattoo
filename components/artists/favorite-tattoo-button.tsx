@@ -53,13 +53,11 @@ export function FavoriteTattooButton({ tattooId, initialIsFavorited }: Props) {
       <button
         onClick={handleToggle}
         disabled={isPending || loading}
-        className="rounded-full bg-black/50 p-1.5 backdrop-blur-sm transition-colors hover:bg-black/70 disabled:opacity-50"
+        className="cursor-pointer rounded-full bg-black/50 p-1.5 backdrop-blur-sm transition-colors hover:bg-black/70 disabled:opacity-50"
         aria-label={isFavorited ? "Retirer des favoris" : "Ajouter aux favoris"}
       >
         <Heart
-          className="size-4"
-          fill={isFavorited ? "white" : "none"}
-          stroke="white"
+          className={`size-4 ${isFavorited ? "fill-primary stroke-primary" : "fill-none stroke-white"}`}
         />
       </button>
 

@@ -37,7 +37,7 @@ export function FollowButton({ artistId, initialIsFollowed }: Props) {
         return;
       }
 
-      toast.success(isFollowed ? "Artiste retiré des favoris" : "Artiste suivi !");
+      toast.success(isFollowed ? "Vous ne suivez plus cet artiste" : "Artiste suivi !");
     } catch {
       setIsFollowed((prev) => !prev);
       toast.error("Une erreur est survenue");

@@ -25,6 +25,8 @@ export function ArtistPortfolioGrid({
     );
   }
 
+  const favoritedSet = favoritedTattooIds ? new Set(favoritedTattooIds) : undefined;
+
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
       {tattoos.map((tattoo, index) => (
@@ -42,11 +44,11 @@ export function ArtistPortfolioGrid({
             priority={index < 4}
             loading={index < 4 ? undefined : "lazy"}
           />
-          {favoritedTattooIds !== undefined && (
+          {favoritedSet !== undefined && (
             <div className="absolute right-2 top-2 z-10">
               <FavoriteTattooButton
                 tattooId={tattoo.id}
-                initialIsFavorited={favoritedTattooIds.includes(tattoo.id)}
+                initialIsFavorited={favoritedSet.has(tattoo.id)}
               />
             </div>
           )}
