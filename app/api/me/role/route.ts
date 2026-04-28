@@ -31,18 +31,20 @@ export async function PATCH(req: Request) {
 
   const { role } = parsed.data;
 
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { role, roleSelected: true },
-  });
-
-  if (role === "artist") {
-    await prisma.tattooArtist.upsert({
-      where: { userId: session.user.id },
-      update: {},
-      create: { userId: session.user.id },
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: session.user.id },
+      data: { role, roleSelected: true },
     });
-  }
+
+    if (role === "artist") {
+      await tx.tattooArtist.upsert({
+        where: { userId: session.user.id },
+        update: {},
+        create: { userId: session.user.id },
+      });
+    }
+  });
 
   return NextResponse.json({ success: true });
 }
