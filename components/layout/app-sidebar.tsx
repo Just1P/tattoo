@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { signOut, useSession } from "@/lib/auth-client";
-import { BookOpen, CalendarDays, Images, LayoutDashboard, LogIn, LogOut, MessageCircle, Search, User } from "lucide-react";
+import { BookOpen, CalendarDays, Images, LayoutDashboard, LogIn, LogOut, MessageCircle, Rss, Search, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -47,6 +47,7 @@ export function AppSidebar() {
   }
 
   const navLinks = [
+    { label: "Feed", href: "/feed", icon: Rss },
     { label: "Trouver un artiste", href: "/artists", icon: Search },
     ...(role === "artist"
       ? [
