@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_ROUTES = ["/", "/artists", "/login", "/register"];
+const PUBLIC_ROUTES = ["/", "/artists", "/feed", "/login", "/register"];
 
-const PUBLIC_PREFIXES = ["/artists/"];
+const PUBLIC_PREFIXES = ["/artists/", "/feed"];
 
 const AUTH_ROUTES = ["/login", "/register"];
 
