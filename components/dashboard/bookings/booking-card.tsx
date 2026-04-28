@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { SIZE_LABELS, TATTOO_TYPE_LABELS } from "@/lib/constants";
+import { TIME_OPTIONS } from "@/lib/time-utils";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -45,18 +47,6 @@ type Booking = {
   };
 };
 
-const TATTOO_TYPE_LABELS: Record<string, string> = {
-  premier_rdv: "Premier rendez-vous",
-  remplissage: "Remplissage",
-  retouche: "Retouche",
-};
-
-const SIZE_LABELS: Record<string, string> = {
-  petit: "Petit (< 5 cm)",
-  moyen: "Moyen (5–15 cm)",
-  grand: "Grand (15–30 cm)",
-  tres_grand: "Très grand (> 30 cm)",
-};
 
 const STATUS_STYLES: Record<BookingStatus, string> = {
   pending:
@@ -72,16 +62,6 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
   cancelled: "Annulé",
 };
 
-function generateTimeOptions(): string[] {
-  const options: string[] = [];
-  for (let h = 7; h <= 22; h++) {
-    options.push(`${String(h).padStart(2, "0")}:00`);
-    if (h < 22) options.push(`${String(h).padStart(2, "0")}:30`);
-  }
-  return options;
-}
-
-const TIME_OPTIONS = generateTimeOptions();
 
 function combineDateAndTime(date: Date, time: string): Date {
   const yyyy = date.getFullYear();

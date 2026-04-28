@@ -77,6 +77,22 @@ export async function getArtistPageData(id: string, userId?: string) {
   return { artist, isFollowed, favoritedTattooIds };
 }
 
+export async function getFollowedArtists(userId: string) {
+  const followed = await prisma.artistFollower.findMany({
+    where: { userId },
+    include: {
+      artist: {
+        include: {
+          artistStyles: { include: { style: { select: { id: true, name: true } } } },
+          _count: { select: { tattoos: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return followed.map(({ artist }) => artist);
+}
+
 export async function getAllPublicArtistIds() {
   const artists = await prisma.tattooArtist.findMany({
     where: { verified: "approved" },

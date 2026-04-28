@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth";
+import { requireArtist } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -26,15 +26,9 @@ const weeklySlotSchema = z
   });
 
 export async function POST(req: NextRequest) {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  }
-
-  if (session.user.role !== "artist") {
-    return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
-  }
+  const guard = await requireArtist();
+  if (!guard.ok) return guard.response;
+  const { artist } = guard;
 
   let body;
   try {
@@ -49,14 +43,6 @@ export async function POST(req: NextRequest) {
       { error: "Données invalides", details: parsed.error.issues },
       { status: 422 }
     );
-  }
-
-  const artist = await prisma.tattooArtist.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  if (!artist) {
-    return NextResponse.json({ error: "Profil artiste introuvable" }, { status: 404 });
   }
 
   try {

@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth";
+import { requireArtist } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -19,15 +19,9 @@ const profileSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest) {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  }
-
-  if (session.user.role !== "artist") {
-    return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
-  }
+  const guard = await requireArtist();
+  if (!guard.ok) return guard.response;
+  const { session, artist } = guard;
 
   let body;
   try {
@@ -50,14 +44,6 @@ export async function PATCH(req: NextRequest) {
 
   const { styleIds, instagramUrl, ...artistData } = parsed.data;
   const uniqueStyleIds = [...new Set(styleIds)];
-
-  const artist = await prisma.tattooArtist.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  if (!artist) {
-    return NextResponse.json({ error: "Profil artiste introuvable" }, { status: 404 });
-  }
 
   await prisma.$transaction(async (tx) => {
     await tx.tattooArtist.update({

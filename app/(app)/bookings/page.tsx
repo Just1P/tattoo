@@ -1,6 +1,7 @@
 import Typography from "@/components/custom/Typography";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/auth";
+import { SIZE_LABELS, TATTOO_TYPE_LABELS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -19,18 +20,6 @@ const STATUS_STYLES = {
   cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
-const TATTOO_TYPE_LABELS: Record<string, string> = {
-  premier_rdv: "Premier rendez-vous",
-  remplissage: "Remplissage",
-  retouche: "Retouche",
-};
-
-const SIZE_LABELS: Record<string, string> = {
-  petit: "Petit (< 5 cm)",
-  moyen: "Moyen (5–15 cm)",
-  grand: "Grand (15–30 cm)",
-  tres_grand: "Très grand (> 30 cm)",
-};
 
 export default async function ClientBookingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });

@@ -1,5 +1,6 @@
 "use client";
 
+import { type DayOfWeek, DAY_LABELS, DAYS, TIME_OPTIONS } from "@/lib/time-utils";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,15 +12,6 @@ import {
 import { toast } from "sonner";
 import { useState } from "react";
 
-type DayOfWeek =
-  | "MONDAY"
-  | "TUESDAY"
-  | "WEDNESDAY"
-  | "THURSDAY"
-  | "FRIDAY"
-  | "SATURDAY"
-  | "SUNDAY";
-
 type WeeklySlot = {
   id: string;
   day: DayOfWeek;
@@ -27,36 +19,6 @@ type WeeklySlot = {
   endTime: string;
 };
 
-const DAY_LABELS: Record<DayOfWeek, string> = {
-  MONDAY: "Lundi",
-  TUESDAY: "Mardi",
-  WEDNESDAY: "Mercredi",
-  THURSDAY: "Jeudi",
-  FRIDAY: "Vendredi",
-  SATURDAY: "Samedi",
-  SUNDAY: "Dimanche",
-};
-
-const DAYS: DayOfWeek[] = [
-  "MONDAY",
-  "TUESDAY",
-  "WEDNESDAY",
-  "THURSDAY",
-  "FRIDAY",
-  "SATURDAY",
-  "SUNDAY",
-];
-
-function generateTimeOptions(): string[] {
-  const options: string[] = [];
-  for (let h = 7; h <= 22; h++) {
-    options.push(`${String(h).padStart(2, "0")}:00`);
-    if (h < 22) options.push(`${String(h).padStart(2, "0")}:30`);
-  }
-  return options;
-}
-
-const TIME_OPTIONS = generateTimeOptions();
 const DEFAULT_START = "09:00";
 const DEFAULT_END = "18:00";
 

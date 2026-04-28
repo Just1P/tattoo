@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth";
+import { requireArtistRole } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -18,15 +18,9 @@ const onboardingSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  }
-
-  if (session.user.role !== "artist") {
-    return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
-  }
+  const guard = await requireArtistRole();
+  if (!guard.ok) return guard.response;
+  const { session } = guard;
 
   let body;
   try {

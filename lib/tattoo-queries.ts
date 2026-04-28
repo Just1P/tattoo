@@ -2,6 +2,18 @@ import { prisma } from "@/lib/prisma";
 
 const PAGE_SIZE = 24;
 
+export async function getFavoritedTattooIds(
+  userId: string,
+  tattooIds: string[],
+): Promise<Set<string>> {
+  if (tattooIds.length === 0) return new Set();
+  const rows = await prisma.favoriteTattoo.findMany({
+    where: { userId, tattooId: { in: tattooIds } },
+    select: { tattooId: true },
+  });
+  return new Set(rows.map((r) => r.tattooId));
+}
+
 export type TattooFeedFilters = {
   styleSlug?: string;
   page?: number;

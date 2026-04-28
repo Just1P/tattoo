@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth";
+import { requireArtist } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -6,25 +6,11 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  }
-
-  if (session.user.role !== "artist") {
-    return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
-  }
+  const guard = await requireArtist();
+  if (!guard.ok) return guard.response;
+  const { artist } = guard;
 
   const { id } = await params;
-
-  const artist = await prisma.tattooArtist.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  if (!artist) {
-    return NextResponse.json({ error: "Profil artiste introuvable" }, { status: 404 });
-  }
 
   const slot = await prisma.weeklySlot.findUnique({ where: { id } });
 
