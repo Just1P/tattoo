@@ -1,41 +1,68 @@
-import { prisma } from "@/lib/prisma";
 import { ArtistCard } from "@/components/artists/artist-card";
+import { ArtistFilters } from "@/components/artists/artist-filters";
 import Typography from "@/components/custom/Typography";
+import { getFilteredArtists, getAllStyles } from "@/lib/artist-queries";
+import Link from "next/link";
 
-export const revalidate = 3600;
+type SearchParams = Promise<{
+  search?: string;
+  city?: string;
+  styleSlug?: string;
+  minPrice?: string;
+  maxPrice?: string;
+}>;
 
-async function getArtists() {
-  return prisma.tattooArtist.findMany({
-    where: {
-      artistName: { not: null },
-      verified: "approved",
-    },
-    include: {
-      artistStyles: {
-        include: { style: { select: { id: true, name: true } } },
-      },
-      _count: { select: { tattoos: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-}
+export default async function ArtistsPage({ searchParams }: { searchParams: SearchParams }) {
+  const params = await searchParams;
 
-export default async function ArtistsPage() {
-  const artists = await getArtists();
+  const filters = {
+    search: params.search,
+    city: params.city,
+    styleSlug: params.styleSlug,
+    minPrice: params.minPrice ? parseInt(params.minPrice) : undefined,
+    maxPrice: params.maxPrice ? parseInt(params.maxPrice) : undefined,
+  };
+
+  const hasFilters = !!(params.search || params.city || params.styleSlug || params.minPrice || params.maxPrice);
+
+  const [artists, styles] = await Promise.all([
+    getFilteredArtists(filters),
+    getAllStyles(),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-4 py-10">
       <div className="space-y-1">
         <Typography tag="h1">Nos tatoueurs</Typography>
         <Typography tag="p" color="muted">
-          {artists.length} artiste{artists.length !== 1 ? "s" : ""} sur la plateforme
+          {artists.length} artiste{artists.length !== 1 ? "s" : ""} trouvé{artists.length !== 1 ? "s" : ""}
         </Typography>
       </div>
 
+      <ArtistFilters
+        styles={styles}
+        defaultValues={{
+          search: params.search ?? "",
+          city: params.city ?? "",
+          styleSlug: params.styleSlug ?? "",
+          minPrice: params.minPrice ?? "",
+          maxPrice: params.maxPrice ?? "",
+        }}
+      />
+
       {artists.length === 0 ? (
-        <Typography tag="p" color="muted">
-          Aucun artiste disponible pour le moment.
-        </Typography>
+        <div className="space-y-2">
+          <Typography tag="p" color="muted">
+            Aucun artiste trouvé pour ces critères.
+          </Typography>
+          {hasFilters && (
+            <Link href="/artists">
+              <Typography tag="span" color="primary" underline>
+                Réinitialiser les filtres
+              </Typography>
+            </Link>
+          )}
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {artists.map((artist) => (
