@@ -26,9 +26,7 @@ export async function getFilteredArtists(filters: ArtistFilters = {}) {
       ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
     },
     include: {
-      artistStyles: {
-        include: { style: { select: { id: true, name: true } } },
-      },
+      artistStyles: { include: styleInclude },
       _count: { select: { tattoos: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -83,7 +81,7 @@ export async function getFollowedArtists(userId: string) {
     include: {
       artist: {
         include: {
-          artistStyles: { include: { style: { select: { id: true, name: true } } } },
+          artistStyles: { include: styleInclude },
           _count: { select: { tattoos: true } },
         },
       },
