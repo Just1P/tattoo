@@ -59,6 +59,24 @@ export async function getArtistByUserId(userId: string) {
   });
 }
 
+export async function getArtistPageData(id: string, userId?: string) {
+  const [artist, isFollowed, favoritedTattooIds] = await Promise.all([
+    getPublicArtist(id),
+    userId
+      ? prisma.artistFollower
+          .findUnique({ where: { artistId_userId: { artistId: id, userId } } })
+          .then(Boolean)
+      : Promise.resolve(false),
+    userId
+      ? prisma.favoriteTattoo
+          .findMany({ where: { userId, tattoo: { artistId: id } }, select: { tattooId: true } })
+          .then((rows) => rows.map((r) => r.tattooId))
+      : Promise.resolve(undefined),
+  ]);
+
+  return { artist, isFollowed, favoritedTattooIds };
+}
+
 export async function getAllPublicArtistIds() {
   const artists = await prisma.tattooArtist.findMany({
     where: { verified: "approved" },
