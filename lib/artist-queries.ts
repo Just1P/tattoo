@@ -10,10 +10,11 @@ export type ArtistFilters = {
   styleSlug?: string;
   minPrice?: number;
   maxPrice?: number;
+  excludeUserId?: string;
 };
 
 export async function getFilteredArtists(filters: ArtistFilters = {}) {
-  const { search, city, styleSlug, minPrice, maxPrice } = filters;
+  const { search, city, styleSlug, minPrice, maxPrice, excludeUserId } = filters;
   return prisma.tattooArtist.findMany({
     where: {
       artistName: { not: null, ...(search ? { contains: search, mode: "insensitive" } : {}) },
@@ -22,6 +23,7 @@ export async function getFilteredArtists(filters: ArtistFilters = {}) {
       ...(styleSlug ? { artistStyles: { some: { style: { slug: styleSlug } } } } : {}),
       ...(minPrice !== undefined ? { priceMin: { gte: minPrice } } : {}),
       ...(maxPrice !== undefined ? { priceMax: { lte: maxPrice } } : {}),
+      ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
     },
     include: {
       artistStyles: {

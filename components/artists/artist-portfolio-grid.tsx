@@ -1,3 +1,4 @@
+import { FavoriteTattooButton } from "@/components/artists/favorite-tattoo-button";
 import Typography from "@/components/custom/Typography";
 import Image from "next/image";
 
@@ -9,7 +10,13 @@ type Tattoo = {
   style: { name: string };
 };
 
-export function ArtistPortfolioGrid({ tattoos }: { tattoos: Tattoo[] }) {
+export function ArtistPortfolioGrid({
+  tattoos,
+  favoritedTattooIds,
+}: {
+  tattoos: Tattoo[];
+  favoritedTattooIds?: string[];
+}) {
   if (tattoos.length === 0) {
     return (
       <Typography tag="p" color="muted">
@@ -17,6 +24,8 @@ export function ArtistPortfolioGrid({ tattoos }: { tattoos: Tattoo[] }) {
       </Typography>
     );
   }
+
+  const favoritedSet = favoritedTattooIds ? new Set(favoritedTattooIds) : undefined;
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
@@ -35,6 +44,14 @@ export function ArtistPortfolioGrid({ tattoos }: { tattoos: Tattoo[] }) {
             priority={index < 4}
             loading={index < 4 ? undefined : "lazy"}
           />
+          {favoritedSet !== undefined && (
+            <div className="absolute right-2 top-2 z-10">
+              <FavoriteTattooButton
+                tattooId={tattoo.id}
+                initialIsFavorited={favoritedSet.has(tattoo.id)}
+              />
+            </div>
+          )}
           <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/60 to-transparent p-2 opacity-0 transition-smooth transition-opacity group-hover:opacity-100">
             {tattoo.title && (
               <Typography tag="span" color="white" weight="semi-bold">

@@ -1,7 +1,9 @@
 import { ArtistCard } from "@/components/artists/artist-card";
 import { ArtistFilters } from "@/components/artists/artist-filters";
 import Typography from "@/components/custom/Typography";
+import { auth } from "@/lib/auth";
 import { getFilteredArtists, getAllStyles } from "@/lib/artist-queries";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 type SearchParams = Promise<{
@@ -14,6 +16,7 @@ type SearchParams = Promise<{
 
 export default async function ArtistsPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
+  const session = await auth.api.getSession({ headers: await headers() });
 
   const filters = {
     search: params.search,
@@ -21,6 +24,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Sear
     styleSlug: params.styleSlug,
     minPrice: params.minPrice ? parseInt(params.minPrice) : undefined,
     maxPrice: params.maxPrice ? parseInt(params.maxPrice) : undefined,
+    excludeUserId: session?.user.id,
   };
 
   const hasFilters = !!(params.search || params.city || params.styleSlug || params.minPrice || params.maxPrice);

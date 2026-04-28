@@ -41,6 +41,7 @@ export function AppSidebar() {
       : []),
     ...(role === "client"
       ? [
+          { label: "Mon profil", href: "/profile", icon: User },
           { label: "Mes rendez-vous", href: "/bookings", icon: BookOpen },
           { label: "Messages", href: "/messages", icon: MessageCircle },
         ]

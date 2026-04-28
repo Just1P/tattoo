@@ -2,12 +2,14 @@ import { ArtistPortfolioGrid } from "@/components/artists/artist-portfolio-grid"
 import { ArtistProfileHeader } from "@/components/artists/artist-profile-header";
 import { BookingRequestSheet } from "@/components/artists/booking-request-sheet";
 import { ContactButton } from "@/components/artists/contact-button";
+import { FollowButton } from "@/components/artists/follow-button";
 import Typography from "@/components/custom/Typography";
+import { auth } from "@/lib/auth";
 import { getAllPublicArtistIds, getPublicArtist } from "@/lib/artist-queries";
+import { prisma } from "@/lib/prisma";
+import { headers } from "next/headers";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-
-export const revalidate = 3600;
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -19,7 +21,23 @@ export async function generateStaticParams() {
 
 export default async function ArtistPublicPage({ params }: Props) {
   const { id } = await params;
-  const artist = await getPublicArtist(id);
+
+  const requestHeaders = await headers();
+  const session = await auth.api.getSession({ headers: requestHeaders });
+
+  const [artist, isFollowed, favoritedTattooIds] = await Promise.all([
+    getPublicArtist(id),
+    session
+      ? prisma.artistFollower
+          .findUnique({ where: { artistId_userId: { artistId: id, userId: session.user.id } } })
+          .then(Boolean)
+      : Promise.resolve(false),
+    session
+      ? prisma.favoriteTattoo
+          .findMany({ where: { userId: session.user.id, tattoo: { artistId: id } }, select: { tattooId: true } })
+          .then((rows) => rows.map((r) => r.tattooId))
+      : Promise.resolve(undefined),
+  ]);
 
   if (!artist) notFound();
 
@@ -47,6 +65,9 @@ export default async function ArtistPublicPage({ params }: Props) {
               artistName={artist.artistName}
             />
             <ContactButton artistUserId={artist.userId} />
+            {session?.user.id !== artist.userId && (
+              <FollowButton artistId={artist.id} initialIsFollowed={isFollowed} />
+            )}
           </div>
         </div>
 
@@ -67,7 +88,7 @@ export default async function ArtistPublicPage({ params }: Props) {
 
       <section className="space-y-6 px-8 py-12">
         <Typography tag="h2">Portfolio</Typography>
-        <ArtistPortfolioGrid tattoos={artist.tattoos} />
+        <ArtistPortfolioGrid tattoos={artist.tattoos} favoritedTattooIds={favoritedTattooIds} />
       </section>
     </main>
   );
