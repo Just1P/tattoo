@@ -190,7 +190,7 @@ export function RegisterForm() {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Création..." : "Créer mon compte"}
             </Button>
-            {lastMethod === "email" && <RecentBadge />}
+            {lastMethod === "email" && <RecentBadge className="bg-slate-700 text-white" />}
           </div>
         </form>
 

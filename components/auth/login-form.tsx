@@ -104,7 +104,7 @@ export function LoginForm() {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Connexion..." : "Se connecter"}
             </Button>
-            {lastMethod === "email" && <RecentBadge />}
+            {lastMethod === "email" && <RecentBadge className="bg-slate-700 text-white" />}
           </div>
         </form>
 
