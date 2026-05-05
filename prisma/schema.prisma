@@ -88,8 +88,9 @@ model TattooArtist {
   priceMin       Int?
   priceMax       Int?
   followersCount Int                @default(0)
-  verified       VerificationStatus @default(pending)
-  instagramUrl   String?
+  verified           VerificationStatus @default(pending)
+  verificationNote   String?
+  instagramUrl       String?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
