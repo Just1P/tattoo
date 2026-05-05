@@ -7,8 +7,21 @@ import { getFilteredArtists } from "@/lib/artist-queries";
 import { getFavoritedTattooIds, getPublicTattoos } from "@/lib/tattoo-queries";
 import { headers } from "next/headers";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "Tattoo Pro — Où l'art rencontre la peau",
+  description:
+    "Découvrez des artistes tatoueurs d'exception, explorez leurs œuvres et trouvez l'inspiration pour votre prochain tatouage.",
+  openGraph: {
+    title: "Tattoo Pro — Où l'art rencontre la peau",
+    description:
+      "Découvrez des artistes tatoueurs d'exception, explorez leurs œuvres et trouvez l'inspiration pour votre prochain tatouage.",
+    images: [{ url: "/og-hero.jpg", width: 1200, height: 630 }],
+  },
+};
 
 export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });

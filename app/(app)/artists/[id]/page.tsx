@@ -5,9 +5,10 @@ import { ContactButton } from "@/components/artists/contact-button";
 import { FollowButton } from "@/components/artists/follow-button";
 import Typography from "@/components/custom/Typography";
 import { auth } from "@/lib/auth";
-import { getAllPublicArtistIds, getArtistPageData } from "@/lib/artist-queries";
+import { getAllPublicArtistIds, getArtistPageData, getPublicArtist } from "@/lib/artist-queries";
 import { headers } from "next/headers";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 type Props = {
@@ -16,6 +17,28 @@ type Props = {
 
 export async function generateStaticParams() {
   return getAllPublicArtistIds();
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const artist = await getPublicArtist(id);
+  if (!artist) return {};
+
+  const name = artist.artistName ?? "Artiste";
+  const description = artist.bio
+    ? artist.bio.slice(0, 160)
+    : `Découvrez le portfolio de ${name} sur Tattoo Pro.`;
+  const firstImage = artist.tattoos[0]?.imageUrl ?? null;
+
+  return {
+    title: `${name} — Tattoo Pro`,
+    description,
+    openGraph: {
+      title: `${name} — Tattoo Pro`,
+      description,
+      ...(firstImage ? { images: [{ url: firstImage, width: 1200, height: 630 }] } : {}),
+    },
+  };
 }
 
 export default async function ArtistPublicPage({ params }: Props) {
