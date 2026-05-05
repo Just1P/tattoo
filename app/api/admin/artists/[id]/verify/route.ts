@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/api-helpers";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { PrismaClientKnownRequestError } from "@/lib/generated/prisma/internal/prismaNamespace";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -43,7 +43,7 @@ export async function PATCH(
     });
     return NextResponse.json(artist);
   } catch (e) {
-    if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
       return NextResponse.json({ error: "Artiste introuvable" }, { status: 404 });
     }
     throw e;

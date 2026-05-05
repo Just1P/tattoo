@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { cache } from "react";
 
 const tattooOrderBy = [{ pinned: "desc" as const }, { position: "asc" as const }];
 const tattooInclude = { style: { select: { name: true } } };
@@ -37,7 +38,7 @@ export async function getAllStyles() {
   return prisma.style.findMany({ orderBy: { name: "asc" } });
 }
 
-export async function getPublicArtist(id: string) {
+export const getPublicArtist = cache(async function getPublicArtist(id: string) {
   return prisma.tattooArtist.findFirst({
     where: { id, verified: "approved" },
     include: {
@@ -45,7 +46,7 @@ export async function getPublicArtist(id: string) {
       artistStyles: { include: styleInclude },
     },
   });
-}
+});
 
 export async function getArtistByUserId(userId: string) {
   return prisma.tattooArtist.findUnique({
