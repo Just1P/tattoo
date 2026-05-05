@@ -161,11 +161,12 @@ export function ArtistVerificationTable({ artists }: { artists: Artist[] }) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Note interne (visible par l&apos;artiste)
+            <label htmlFor="verification-note" className="text-sm font-medium">
+              Note visible par l&apos;artiste
             </label>
             <Textarea
-              placeholder="Motif de refus, demande de documents manquants…"
+              id="verification-note"
+              placeholder="Expliquez le motif du refus ou les documents manquants…"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}

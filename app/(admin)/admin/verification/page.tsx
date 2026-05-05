@@ -2,9 +2,11 @@ import { ArtistVerificationTable } from "@/components/admin/artist-verification-
 import Typography from "@/components/custom/Typography";
 import { prisma } from "@/lib/prisma";
 
+const onboardingComplete = { artistName: { not: null }, siret: { not: null } };
+
 async function getArtistsByStatus(status: "pending" | "approved" | "rejected") {
   return prisma.tattooArtist.findMany({
-    where: { verified: status },
+    where: { verified: status, ...onboardingComplete },
     include: { user: { select: { email: true, name: true } } },
     orderBy: { createdAt: "asc" },
   });
@@ -21,9 +23,9 @@ export default async function AdminVerificationPage({
     : "pending";
 
   const [pending, approved, rejected] = await Promise.all([
-    prisma.tattooArtist.count({ where: { verified: "pending" } }),
-    prisma.tattooArtist.count({ where: { verified: "approved" } }),
-    prisma.tattooArtist.count({ where: { verified: "rejected" } }),
+    prisma.tattooArtist.count({ where: { verified: "pending", ...onboardingComplete } }),
+    prisma.tattooArtist.count({ where: { verified: "approved", ...onboardingComplete } }),
+    prisma.tattooArtist.count({ where: { verified: "rejected", ...onboardingComplete } }),
   ]);
 
   const artists = await getArtistsByStatus(activeTab);

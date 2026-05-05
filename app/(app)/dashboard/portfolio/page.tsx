@@ -34,7 +34,7 @@ export default async function DashboardPortfolioPage() {
       label: "En attente de vérification",
       variant: "secondary" as const,
       message:
-        "Votre profil est en cours d'examen par notre équipe. Vous serez notifié une fois la vérification effectuée.",
+        "Votre profil est en cours d'examen par notre équipe. Consultez ce tableau de bord pour suivre l'état de la vérification.",
     },
     approved: null,
     rejected: {
