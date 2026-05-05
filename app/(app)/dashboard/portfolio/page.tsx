@@ -1,5 +1,6 @@
 import { PortfolioGrid } from "@/components/dashboard/portfolio-grid";
 import Typography from "@/components/custom/Typography";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -28,8 +29,38 @@ export default async function DashboardPortfolioPage() {
     prisma.style.findMany({ orderBy: { name: "asc" } }),
   ]);
 
+  const verificationBanner = {
+    pending: {
+      label: "En attente de vérification",
+      variant: "secondary" as const,
+      message:
+        "Votre profil est en cours d'examen par notre équipe. Consultez ce tableau de bord pour suivre l'état de la vérification.",
+    },
+    approved: null,
+    rejected: {
+      label: "Profil refusé",
+      variant: "destructive" as const,
+      message: artist.verificationNote
+        ? `Motif : ${artist.verificationNote}`
+        : "Votre profil n'a pas été approuvé. Contactez le support pour plus d'informations.",
+    },
+  }[artist.verified];
+
   return (
     <div className="space-y-6">
+      {verificationBanner && (
+        <div className="rounded-md border bg-muted/40 p-4">
+          <div className="flex items-center gap-2">
+            <Badge variant={verificationBanner.variant}>
+              {verificationBanner.label}
+            </Badge>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {verificationBanner.message}
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <Typography tag="h1">Mon portfolio</Typography>

@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { signOut, useSession } from "@/lib/auth-client";
-import { BookOpen, CalendarDays, Images, LayoutDashboard, LogIn, LogOut, MessageCircle, Rss, Search, User } from "lucide-react";
+import { BookOpen, CalendarDays, Images, LayoutDashboard, LogIn, LogOut, MessageCircle, Rss, Search, ShieldCheck, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -64,6 +64,11 @@ export function AppSidebar() {
           { label: "Mon profil", href: "/profile", icon: User },
           { label: "Mes rendez-vous", href: "/bookings", icon: BookOpen },
           { label: "Messages", href: "/messages", icon: MessageCircle },
+        ]
+      : []),
+    ...(role === "admin"
+      ? [
+          { label: "Vérification artistes", href: "/admin/verification", icon: ShieldCheck },
         ]
       : []),
   ];

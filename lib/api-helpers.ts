@@ -26,6 +26,23 @@ export async function requireArtistRole(): Promise<ErrorResult | RoleSuccess> {
   return { ok: true, session };
 }
 
+export async function requireAdmin(): Promise<ErrorResult | RoleSuccess> {
+  const session = await getSession();
+  if (!session) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Non authentifié" }, { status: 401 }),
+    };
+  }
+  if (session.user.role !== "admin") {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Accès interdit" }, { status: 403 }),
+    };
+  }
+  return { ok: true, session };
+}
+
 export async function requireArtist(): Promise<ErrorResult | ArtistSuccess> {
   const check = await requireArtistRole();
   if (!check.ok) return check;
