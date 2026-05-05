@@ -5,6 +5,18 @@ import { auth } from "@/lib/auth";
 import { getFilteredArtists, getAllStyles } from "@/lib/artist-queries";
 import { headers } from "next/headers";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Artistes tatoueurs · Tattoo Pro",
+  description:
+    "Trouvez votre prochain tatoueur parmi notre sélection d'artistes vérifiés. Filtrez par style, ville et budget.",
+  openGraph: {
+    title: "Artistes tatoueurs · Tattoo Pro",
+    description:
+      "Trouvez votre prochain tatoueur parmi notre sélection d'artistes vérifiés. Filtrez par style, ville et budget.",
+  },
+};
 
 type SearchParams = Promise<{
   search?: string;

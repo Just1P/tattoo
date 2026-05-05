@@ -7,6 +7,18 @@ import { getAllStyles } from "@/lib/artist-queries";
 import { getFavoritedTattooIds, getPublicTattoos } from "@/lib/tattoo-queries";
 import { headers } from "next/headers";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Feed — Dernières œuvres · Tattoo Pro",
+  description:
+    "Parcourez les dernières créations des tatoueurs de la plateforme, filtrées par style.",
+  openGraph: {
+    title: "Feed — Dernières œuvres · Tattoo Pro",
+    description:
+      "Parcourez les dernières créations des tatoueurs de la plateforme, filtrées par style.",
+  },
+};
 
 type SearchParams = Promise<{ styleSlug?: string; page?: string }>;
 
