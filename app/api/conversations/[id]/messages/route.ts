@@ -1,8 +1,11 @@
 import { auth } from "@/lib/auth";
+import { sendNewMessageEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -101,6 +104,20 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Données invalides" }, { status: 422 });
   }
 
+  // Fetch recipient (client only) and last message before creating
+  const [otherParticipants, lastMessage] = await Promise.all([
+    prisma.conversationParticipant.findMany({
+      where: { conversationId: id, userId: { not: session.user.id } },
+      include: {
+        user: { select: { id: true, email: true, name: true, role: true } },
+      },
+    }),
+    prisma.message.findFirst({
+      where: { conversationId: id },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
   const [message] = await prisma.$transaction([
     prisma.message.create({
       data: {
@@ -118,6 +135,29 @@ export async function POST(req: NextRequest, { params }: Params) {
       data: { updatedAt: new Date() },
     }),
   ]);
+
+  const isFirstMessage = !lastMessage;
+  const isStaleConversation =
+    lastMessage && Date.now() - lastMessage.createdAt.getTime() > THREE_DAYS_MS;
+
+  if (isFirstMessage || isStaleConversation) {
+    const clientRecipients = otherParticipants.filter(
+      (p) => p.user.role === "client",
+    );
+    const senderName = session.user.name ?? "Un utilisateur";
+    const preview = parsed.data.content ?? "📷 Image";
+
+    await Promise.allSettled(
+      clientRecipients.map((p) =>
+        sendNewMessageEmail({
+          to: p.user.email,
+          senderName,
+          preview,
+          conversationId: id,
+        }),
+      ),
+    );
+  }
 
   return NextResponse.json(message, { status: 201 });
 }

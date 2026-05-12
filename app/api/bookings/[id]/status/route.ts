@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth";
+import { sendBookingCancelledEmail, sendBookingConfirmedEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -100,6 +101,14 @@ export async function PATCH(
       },
     });
 
+    await sendBookingConfirmedEmail({
+      to: updated.user.email,
+      clientName: updated.user.name ?? "Client",
+      artistName: artist.artistName ?? "L'artiste",
+      startAt: new Date(data.startAt),
+      artistNote: data.artistNote,
+    }).catch(() => null);
+
     return NextResponse.json(updated);
   }
 
@@ -113,6 +122,13 @@ export async function PATCH(
       user: { select: { id: true, name: true, email: true } },
     },
   });
+
+  await sendBookingCancelledEmail({
+    to: updated.user.email,
+    clientName: updated.user.name ?? "Client",
+    artistName: artist.artistName ?? "L'artiste",
+    artistNote: data.artistNote,
+  }).catch(() => null);
 
   return NextResponse.json(updated);
 }

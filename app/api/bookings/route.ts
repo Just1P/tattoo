@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { sendNewBookingEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -71,18 +72,35 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const booking = await prisma.booking.create({
-    data: {
-      artistId: artist.id,
-      userId: session.user.id,
-      tattooType: parsed.data.tattooType,
+  const [booking, artistUser] = await Promise.all([
+    prisma.booking.create({
+      data: {
+        artistId: artist.id,
+        userId: session.user.id,
+        tattooType: parsed.data.tattooType,
+        bodyPart: parsed.data.bodyPart,
+        size: parsed.data.size,
+        description: parsed.data.description,
+        referenceUrls: parsed.data.referenceUrls,
+        status: "pending",
+      },
+    }),
+    prisma.user.findUnique({
+      where: { id: artist.userId },
+      select: { email: true },
+    }),
+  ]);
+
+  if (artistUser) {
+    await sendNewBookingEmail({
+      to: artistUser.email,
+      clientName: session.user.name ?? "Un client",
+      bookingId: booking.id,
+      description: parsed.data.description,
       bodyPart: parsed.data.bodyPart,
       size: parsed.data.size,
-      description: parsed.data.description,
-      referenceUrls: parsed.data.referenceUrls,
-      status: "pending",
-    },
-  });
+    }).catch(() => null);
+  }
 
   return NextResponse.json(booking, { status: 201 });
 }
