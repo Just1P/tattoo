@@ -27,7 +27,7 @@ export default async function ProfilePage() {
         <div className="relative size-24 overflow-hidden rounded-full bg-muted">
           {user.image || user.avatarUrl ? (
             <Image
-              src={(user.image ?? user.avatarUrl)!}
+              src={(user.avatarUrl ?? user.image)!}
               alt={user.name ?? "Photo de profil"}
               fill
               className="object-cover"

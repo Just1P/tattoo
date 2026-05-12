@@ -12,7 +12,7 @@ import type { OurFileRouter } from "@/lib/uploadthing";
 import { generateReactHelpers } from "@uploadthing/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 const { useUploadThing } = generateReactHelpers<OurFileRouter>();
@@ -46,8 +46,10 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
 
   const [userData, setUserData] = useState(initialUser);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initialUser.avatarUrl);
+  const [isBlobPreview, setIsBlobPreview] = useState(false);
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const blobUrlRef = useRef<string | null>(null);
 
   const [artistData, setArtistData] = useState(initialArtist ?? {
     artistName: "",
@@ -64,6 +66,12 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { startUpload, isUploading } = useUploadThing("avatarImage");
+
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    };
+  }, []);
 
   function updateUser(field: keyof typeof userData, value: string) {
     setUserData((prev) => ({ ...prev, [field]: value }));
@@ -99,8 +107,13 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    const blobUrl = URL.createObjectURL(file);
+    blobUrlRef.current = blobUrl;
     setPendingAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+    setAvatarPreview(blobUrl);
+    setIsBlobPreview(true);
+    e.target.value = "";
   }
 
   async function handleSubmit(e: React.SyntheticEvent) {
@@ -116,7 +129,7 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
         setIsSubmitting(false);
         return;
       }
-      avatarUrl = uploaded[0].url;
+      avatarUrl = uploaded[0].ufsUrl ?? uploaded[0].serverData?.url;
     }
 
     const userOk = await apiFetch("/api/user/profile", {
@@ -162,7 +175,12 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
             className="relative size-20 overflow-hidden rounded-full bg-muted ring-2 ring-border hover:opacity-80 transition-opacity"
           >
             {avatarPreview ? (
-              <Image src={avatarPreview} alt="Avatar" fill className="object-cover" sizes="80px" />
+              isBlobPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarPreview} alt="Avatar" className="size-full object-cover" />
+              ) : (
+                <Image src={avatarPreview} alt="Avatar" fill className="object-cover" sizes="80px" />
+              )
             ) : (
               <span className="flex size-full items-center justify-center text-2xl font-bold text-muted-foreground">
                 {(userData.firstName?.[0] ?? "?").toUpperCase()}
@@ -178,7 +196,7 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
           <input
             ref={avatarInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             className="hidden"
             onChange={handleAvatarChange}
           />
