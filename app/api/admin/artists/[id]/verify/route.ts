@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/api-helpers";
+import { sendProfileApprovedEmail, sendProfileRejectedEmail } from "@/lib/email";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
@@ -41,6 +42,22 @@ export async function PATCH(
       data: { verified, verificationNote: verificationNote ?? null },
       include: { user: { select: { email: true, name: true } } },
     });
+
+    const artistName = artist.artistName ?? artist.user.name ?? "Artiste";
+    if (verified === "approved") {
+      void sendProfileApprovedEmail({
+        to: artist.user.email,
+        artistName,
+        artistId: artist.id,
+      });
+    } else if (verified === "rejected") {
+      void sendProfileRejectedEmail({
+        to: artist.user.email,
+        artistName,
+        verificationNote,
+      });
+    }
+
     return NextResponse.json(artist);
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
