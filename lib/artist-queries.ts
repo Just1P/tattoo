@@ -5,6 +5,8 @@ const tattooOrderBy = [{ pinned: "desc" as const }, { position: "asc" as const }
 const tattooInclude = { style: { select: { name: true } } };
 const styleInclude = { style: { select: { id: true, name: true } } };
 
+const ARTISTS_PAGE_SIZE = 12;
+
 export type ArtistFilters = {
   search?: string;
   city?: string;
@@ -12,26 +14,59 @@ export type ArtistFilters = {
   minPrice?: number;
   maxPrice?: number;
   excludeUserId?: string;
+  page?: number;
 };
+
+const artistPublicSelect = {
+  id: true,
+  artistName: true,
+  bio: true,
+  city: true,
+  priceMin: true,
+  priceMax: true,
+  verified: true,
+  artistStyles: { include: styleInclude },
+  _count: { select: { tattoos: true } },
+} as const;
 
 export async function getFilteredArtists(filters: ArtistFilters = {}) {
   const { search, city, styleSlug, minPrice, maxPrice, excludeUserId } = filters;
-  return prisma.tattooArtist.findMany({
-    where: {
-      artistName: { not: null, ...(search ? { contains: search, mode: "insensitive" } : {}) },
-      verified: "approved",
-      ...(city ? { city: { contains: city, mode: "insensitive" } } : {}),
-      ...(styleSlug ? { artistStyles: { some: { style: { slug: styleSlug } } } } : {}),
-      ...(minPrice !== undefined ? { priceMin: { gte: minPrice } } : {}),
-      ...(maxPrice !== undefined ? { priceMax: { lte: maxPrice } } : {}),
-      ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
-    },
-    include: {
-      artistStyles: { include: styleInclude },
-      _count: { select: { tattoos: true } },
-    },
+  const page = Math.max(1, filters.page ?? 1);
+  const isFirstPage = page === 1;
+
+  const where = {
+    artistName: { not: null, ...(search ? { contains: search, mode: "insensitive" as const } : {}) },
+    verified: "approved" as const,
+    ...(city ? { city: { contains: city, mode: "insensitive" as const } } : {}),
+    ...(styleSlug ? { artistStyles: { some: { style: { slug: styleSlug } } } } : {}),
+    ...(minPrice !== undefined ? { priceMin: { gte: minPrice } } : {}),
+    ...(maxPrice !== undefined ? { priceMax: { lte: maxPrice } } : {}),
+    ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
+  };
+
+  // take + 1 pour détecter s'il y a une page suivante sans COUNT
+  const rows = await prisma.tattooArtist.findMany({
+    where,
+    select: artistPublicSelect,
     orderBy: { createdAt: "desc" },
+    take: ARTISTS_PAGE_SIZE + 1,
+    skip: (page - 1) * ARTISTS_PAGE_SIZE,
   });
+
+  const hasNextPage = rows.length > ARTISTS_PAGE_SIZE;
+  const artists = hasNextPage ? rows.slice(0, ARTISTS_PAGE_SIZE) : rows;
+
+  // COUNT uniquement sur la première page pour afficher le total
+  const totalCount = isFirstPage
+    ? await prisma.tattooArtist.count({ where })
+    : undefined;
+
+  return {
+    artists,
+    totalCount,
+    hasNextPage,
+    currentPage: page,
+  };
 }
 
 export async function getAllStyles() {

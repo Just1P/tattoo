@@ -1,5 +1,5 @@
-import { ArtistCard } from "@/components/artists/artist-card";
 import { ArtistFilters } from "@/components/artists/artist-filters";
+import { ArtistsInfiniteGrid } from "@/components/artists/artists-infinite-grid";
 import Typography from "@/components/custom/Typography";
 import { auth } from "@/lib/auth";
 import { getFilteredArtists, getAllStyles } from "@/lib/artist-queries";
@@ -37,11 +37,12 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Sear
     minPrice: params.minPrice ? parseInt(params.minPrice) : undefined,
     maxPrice: params.maxPrice ? parseInt(params.maxPrice) : undefined,
     excludeUserId: session?.user.id,
+    page: 1,
   };
 
   const hasFilters = !!(params.search || params.city || params.styleSlug || params.minPrice || params.maxPrice);
 
-  const [artists, styles] = await Promise.all([
+  const [{ artists, hasNextPage, totalCount }, styles] = await Promise.all([
     getFilteredArtists(filters),
     getAllStyles(),
   ]);
@@ -51,7 +52,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Sear
       <div className="space-y-1">
         <Typography tag="h1">Nos tatoueurs</Typography>
         <Typography tag="p" color="muted">
-          {artists.length} artiste{artists.length !== 1 ? "s" : ""} trouvé{artists.length !== 1 ? "s" : ""}
+          {totalCount} artiste{totalCount !== 1 ? "s" : ""} trouvé{totalCount !== 1 ? "s" : ""}
         </Typography>
       </div>
 
@@ -80,22 +81,10 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Sear
           )}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {artists.map((artist) => (
-            <ArtistCard
-              key={artist.id}
-              id={artist.id}
-              artistName={artist.artistName}
-              bio={artist.bio}
-              city={artist.city}
-              priceMin={artist.priceMin}
-              priceMax={artist.priceMax}
-              verified={artist.verified}
-              styles={artist.artistStyles.map((as) => as.style)}
-              tattooCount={artist._count.tattoos}
-            />
-          ))}
-        </div>
+        <ArtistsInfiniteGrid
+          initialArtists={artists}
+          initialHasNextPage={hasNextPage}
+        />
       )}
     </main>
   );
