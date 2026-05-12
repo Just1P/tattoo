@@ -28,6 +28,7 @@ export default async function ProfileEditPage() {
     firstName: user.firstName ?? "",
     lastName: user.lastName ?? "",
     description: user.description ?? "",
+    avatarUrl: user.avatarUrl ?? user.image ?? null,
   };
 
   const initialArtist = artistData

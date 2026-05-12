@@ -20,6 +20,22 @@ export const ourFileRouter = {
       return { uploadedBy: metadata.userId, url: file.ufsUrl };
     }),
 
+  avatarImage: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 1,
+      acl: "public-read",
+    },
+  })
+    .middleware(async () => {
+      const session = await getSession();
+      if (!session) throw new Error("Non authentifié");
+      return { userId: session.user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { uploadedBy: metadata.userId, url: file.ufsUrl };
+    }),
+
   tattooImage: f({
     image: {
       maxFileSize: "8MB",
