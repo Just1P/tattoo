@@ -147,7 +147,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const senderName = session.user.name ?? "Un utilisateur";
     const preview = parsed.data.content ?? "📷 Image";
 
-    await Promise.allSettled(
+    void Promise.allSettled(
       clientRecipients.map((p) =>
         sendNewMessageEmail({
           to: p.user.email,

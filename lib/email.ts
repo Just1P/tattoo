@@ -5,6 +5,15 @@ const FROM =
   process.env.EMAIL_FROM ?? "Tattoo Pro <onboarding@resend.dev>";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+function esc(str: string) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function wrap(body: string) {
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/></head><body style="font-family:sans-serif;color:#111;max-width:600px;margin:0 auto;padding:24px">
 ${body}
@@ -30,16 +39,18 @@ export async function sendNewMessageEmail({
   preview: string;
   conversationId: string;
 }) {
-  const link = `${BASE_URL}/dashboard/messages/${conversationId}`;
+  const link = `${BASE_URL}/messages/${conversationId}`;
+  const safeSender = esc(senderName);
+  const safePreview = esc(preview.slice(0, 200)) + (preview.length > 200 ? "…" : "");
   await resend.emails.send({
     from: FROM,
     to,
-    subject: `Nouveau message de ${senderName}`,
+    subject: `Nouveau message de ${safeSender}`,
     html: wrap(`
       <h2 style="margin-bottom:8px">Nouveau message 💬</h2>
-      <p><strong>${senderName}</strong> vous a envoyé un message :</p>
+      <p><strong>${safeSender}</strong> vous a envoyé un message :</p>
       <blockquote style="border-left:3px solid #ddd;margin:16px 0;padding:8px 16px;color:#444;font-style:italic">
-        ${preview.slice(0, 200)}${preview.length > 200 ? "…" : ""}
+        ${safePreview}
       </blockquote>
       ${btn(link, "Voir la conversation")}
     `),
@@ -57,7 +68,6 @@ export async function sendNewBookingEmail({
 }: {
   to: string;
   clientName: string;
-  bookingId: string;
   description: string;
   bodyPart: string;
   size: string;
@@ -72,14 +82,14 @@ export async function sendNewBookingEmail({
   await resend.emails.send({
     from: FROM,
     to,
-    subject: `Nouvelle demande de ${clientName}`,
+    subject: `Nouvelle demande de ${esc(clientName)}`,
     html: wrap(`
       <h2 style="margin-bottom:8px">Nouvelle demande de réservation 📩</h2>
-      <p><strong>${clientName}</strong> souhaite prendre rendez-vous avec vous.</p>
+      <p><strong>${esc(clientName)}</strong> souhaite prendre rendez-vous avec vous.</p>
       <table style="margin:16px 0;border-collapse:collapse;width:100%">
-        <tr><td style="padding:6px 12px 6px 0;color:#888;width:120px">Zone</td><td style="padding:6px 0"><strong>${bodyPart}</strong></td></tr>
-        <tr><td style="padding:6px 12px 6px 0;color:#888">Taille</td><td style="padding:6px 0"><strong>${sizeLabel[size] ?? size}</strong></td></tr>
-        <tr><td style="padding:6px 12px 6px 0;color:#888;vertical-align:top">Description</td><td style="padding:6px 0">${description}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#888;width:120px">Zone</td><td style="padding:6px 0"><strong>${esc(bodyPart)}</strong></td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#888">Taille</td><td style="padding:6px 0"><strong>${esc(sizeLabel[size] ?? size)}</strong></td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#888;vertical-align:top">Description</td><td style="padding:6px 0">${esc(description)}</td></tr>
       </table>
       ${btn(link, "Voir la demande")}
     `),
@@ -101,8 +111,8 @@ export async function sendBookingConfirmedEmail({
   startAt: Date;
   artistNote?: string | null;
 }) {
-  const link = `${BASE_URL}/dashboard/bookings`;
-  const dateStr = startAt.toLocaleDateString("fr-FR", {
+  const link = `${BASE_URL}/bookings`;
+  const dateStr = startAt.toLocaleString("fr-FR", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -116,10 +126,10 @@ export async function sendBookingConfirmedEmail({
     subject: `Votre réservation est confirmée 🎉`,
     html: wrap(`
       <h2 style="margin-bottom:8px">Réservation confirmée ✅</h2>
-      <p>Bonjour ${clientName},</p>
-      <p><strong>${artistName}</strong> a accepté votre demande.</p>
+      <p>Bonjour ${esc(clientName)},</p>
+      <p><strong>${esc(artistName)}</strong> a accepté votre demande.</p>
       <p style="margin:16px 0;font-size:18px;font-weight:600">${dateStr}</p>
-      ${artistNote ? `<p style="color:#444">Note de l'artiste : <em>${artistNote}</em></p>` : ""}
+      ${artistNote ? `<p style="color:#444">Note de l'artiste : <em>${esc(artistNote)}</em></p>` : ""}
       ${btn(link, "Voir mes réservations")}
     `),
   });
@@ -145,9 +155,9 @@ export async function sendBookingCancelledEmail({
     subject: `Votre demande n'a pas été retenue`,
     html: wrap(`
       <h2 style="margin-bottom:8px">Demande non retenue</h2>
-      <p>Bonjour ${clientName},</p>
-      <p><strong>${artistName}</strong> n'est pas en mesure d'accepter votre demande pour le moment.</p>
-      ${artistNote ? `<p style="color:#444">Motif : <em>${artistNote}</em></p>` : ""}
+      <p>Bonjour ${esc(clientName)},</p>
+      <p><strong>${esc(artistName)}</strong> n'est pas en mesure d'accepter votre demande pour le moment.</p>
+      ${artistNote ? `<p style="color:#444">Motif : <em>${esc(artistNote)}</em></p>` : ""}
       <p>Vous pouvez explorer d'autres artistes sur la plateforme.</p>
       ${btn(link, "Trouver un artiste")}
     `),
@@ -172,7 +182,7 @@ export async function sendProfileApprovedEmail({
     subject: `Votre profil est approuvé 🎉`,
     html: wrap(`
       <h2 style="margin-bottom:8px">Profil approuvé ✅</h2>
-      <p>Félicitations <strong>${artistName}</strong> !</p>
+      <p>Félicitations <strong>${esc(artistName)}</strong> !</p>
       <p>Votre profil artiste a été vérifié et est désormais visible par tous les clients sur Tattoo Pro.</p>
       ${btn(link, "Voir mon profil public")}
     `),
@@ -197,9 +207,9 @@ export async function sendProfileRejectedEmail({
     subject: `Votre profil nécessite des modifications`,
     html: wrap(`
       <h2 style="margin-bottom:8px">Profil non approuvé</h2>
-      <p>Bonjour <strong>${artistName}</strong>,</p>
+      <p>Bonjour <strong>${esc(artistName)}</strong>,</p>
       <p>Votre profil artiste n'a pas pu être validé en l'état.</p>
-      ${verificationNote ? `<p style="color:#444">Motif : <em>${verificationNote}</em></p>` : ""}
+      ${verificationNote ? `<p style="color:#444">Motif : <em>${esc(verificationNote)}</em></p>` : ""}
       <p>Mettez votre profil à jour et resoumettez-le pour vérification.</p>
       ${btn(link, "Modifier mon profil")}
     `),

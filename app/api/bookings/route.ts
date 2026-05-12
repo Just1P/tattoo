@@ -92,14 +92,13 @@ export async function POST(req: NextRequest) {
   ]);
 
   if (artistUser) {
-    await sendNewBookingEmail({
+    void sendNewBookingEmail({
       to: artistUser.email,
       clientName: session.user.name ?? "Un client",
-      bookingId: booking.id,
       description: parsed.data.description,
       bodyPart: parsed.data.bodyPart,
       size: parsed.data.size,
-    }).catch(() => null);
+    });
   }
 
   return NextResponse.json(booking, { status: 201 });

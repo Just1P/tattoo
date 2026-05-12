@@ -45,17 +45,17 @@ export async function PATCH(
 
     const artistName = artist.artistName ?? artist.user.name ?? "Artiste";
     if (verified === "approved") {
-      await sendProfileApprovedEmail({
+      void sendProfileApprovedEmail({
         to: artist.user.email,
         artistName,
         artistId: artist.id,
-      }).catch(() => null);
+      });
     } else if (verified === "rejected") {
-      await sendProfileRejectedEmail({
+      void sendProfileRejectedEmail({
         to: artist.user.email,
         artistName,
         verificationNote,
-      }).catch(() => null);
+      });
     }
 
     return NextResponse.json(artist);

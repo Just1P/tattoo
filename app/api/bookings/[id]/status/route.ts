@@ -101,13 +101,13 @@ export async function PATCH(
       },
     });
 
-    await sendBookingConfirmedEmail({
+    void sendBookingConfirmedEmail({
       to: updated.user.email,
       clientName: updated.user.name ?? "Client",
       artistName: artist.artistName ?? "L'artiste",
       startAt: new Date(data.startAt),
       artistNote: data.artistNote,
-    }).catch(() => null);
+    });
 
     return NextResponse.json(updated);
   }
@@ -123,12 +123,12 @@ export async function PATCH(
     },
   });
 
-  await sendBookingCancelledEmail({
+  void sendBookingCancelledEmail({
     to: updated.user.email,
     clientName: updated.user.name ?? "Client",
     artistName: artist.artistName ?? "L'artiste",
     artistNote: data.artistNote,
-  }).catch(() => null);
+  });
 
   return NextResponse.json(updated);
 }
