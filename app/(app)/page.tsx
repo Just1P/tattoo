@@ -27,7 +27,7 @@ export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const role = (session?.user as { role?: string } | undefined)?.role;
 
-  const [{ tattoos }, artists] = await Promise.all([
+  const [{ tattoos }, { artists }] = await Promise.all([
     getPublicTattoos({ page: 1 }),
     getFilteredArtists({}),
   ]);
