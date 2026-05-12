@@ -67,6 +67,9 @@ export function ArtistFilters({ styles, defaultValues }: Props) {
       }
     }
 
+    // Reset to page 1 on filter change
+    params.delete("page");
+
     return `/artists?${params.toString()}`;
   }
 

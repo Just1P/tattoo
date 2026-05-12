@@ -5,6 +5,8 @@ const tattooOrderBy = [{ pinned: "desc" as const }, { position: "asc" as const }
 const tattooInclude = { style: { select: { name: true } } };
 const styleInclude = { style: { select: { id: true, name: true } } };
 
+const ARTISTS_PAGE_SIZE = 12;
+
 export type ArtistFilters = {
   search?: string;
   city?: string;
@@ -12,26 +14,43 @@ export type ArtistFilters = {
   minPrice?: number;
   maxPrice?: number;
   excludeUserId?: string;
+  page?: number;
 };
 
 export async function getFilteredArtists(filters: ArtistFilters = {}) {
   const { search, city, styleSlug, minPrice, maxPrice, excludeUserId } = filters;
-  return prisma.tattooArtist.findMany({
-    where: {
-      artistName: { not: null, ...(search ? { contains: search, mode: "insensitive" } : {}) },
-      verified: "approved",
-      ...(city ? { city: { contains: city, mode: "insensitive" } } : {}),
-      ...(styleSlug ? { artistStyles: { some: { style: { slug: styleSlug } } } } : {}),
-      ...(minPrice !== undefined ? { priceMin: { gte: minPrice } } : {}),
-      ...(maxPrice !== undefined ? { priceMax: { lte: maxPrice } } : {}),
-      ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
-    },
-    include: {
-      artistStyles: { include: styleInclude },
-      _count: { select: { tattoos: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const page = Math.max(1, filters.page ?? 1);
+
+  const where = {
+    artistName: { not: null, ...(search ? { contains: search, mode: "insensitive" as const } : {}) },
+    verified: "approved" as const,
+    ...(city ? { city: { contains: city, mode: "insensitive" as const } } : {}),
+    ...(styleSlug ? { artistStyles: { some: { style: { slug: styleSlug } } } } : {}),
+    ...(minPrice !== undefined ? { priceMin: { gte: minPrice } } : {}),
+    ...(maxPrice !== undefined ? { priceMax: { lte: maxPrice } } : {}),
+    ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
+  };
+
+  const [artists, totalCount] = await Promise.all([
+    prisma.tattooArtist.findMany({
+      where,
+      include: {
+        artistStyles: { include: styleInclude },
+        _count: { select: { tattoos: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: ARTISTS_PAGE_SIZE,
+      skip: (page - 1) * ARTISTS_PAGE_SIZE,
+    }),
+    prisma.tattooArtist.count({ where }),
+  ]);
+
+  return {
+    artists,
+    totalCount,
+    totalPages: Math.max(1, Math.ceil(totalCount / ARTISTS_PAGE_SIZE)),
+    currentPage: page,
+  };
 }
 
 export async function getAllStyles() {
