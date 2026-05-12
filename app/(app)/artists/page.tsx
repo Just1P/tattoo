@@ -42,7 +42,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Sear
 
   const hasFilters = !!(params.search || params.city || params.styleSlug || params.minPrice || params.maxPrice);
 
-  const [{ artists, totalPages, totalCount }, styles] = await Promise.all([
+  const [{ artists, hasNextPage, totalCount }, styles] = await Promise.all([
     getFilteredArtists(filters),
     getAllStyles(),
   ]);
@@ -83,7 +83,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Sear
       ) : (
         <ArtistsInfiniteGrid
           initialArtists={artists}
-          initialHasMore={totalPages > 1}
+          initialHasNextPage={hasNextPage}
         />
       )}
     </main>

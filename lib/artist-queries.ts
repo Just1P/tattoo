@@ -17,9 +17,22 @@ export type ArtistFilters = {
   page?: number;
 };
 
+const artistPublicSelect = {
+  id: true,
+  artistName: true,
+  bio: true,
+  city: true,
+  priceMin: true,
+  priceMax: true,
+  verified: true,
+  artistStyles: { include: styleInclude },
+  _count: { select: { tattoos: true } },
+} as const;
+
 export async function getFilteredArtists(filters: ArtistFilters = {}) {
   const { search, city, styleSlug, minPrice, maxPrice, excludeUserId } = filters;
   const page = Math.max(1, filters.page ?? 1);
+  const isFirstPage = page === 1;
 
   const where = {
     artistName: { not: null, ...(search ? { contains: search, mode: "insensitive" as const } : {}) },
@@ -31,24 +44,27 @@ export async function getFilteredArtists(filters: ArtistFilters = {}) {
     ...(excludeUserId ? { userId: { not: excludeUserId } } : {}),
   };
 
-  const [artists, totalCount] = await Promise.all([
-    prisma.tattooArtist.findMany({
-      where,
-      include: {
-        artistStyles: { include: styleInclude },
-        _count: { select: { tattoos: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: ARTISTS_PAGE_SIZE,
-      skip: (page - 1) * ARTISTS_PAGE_SIZE,
-    }),
-    prisma.tattooArtist.count({ where }),
-  ]);
+  // take + 1 pour détecter s'il y a une page suivante sans COUNT
+  const rows = await prisma.tattooArtist.findMany({
+    where,
+    select: artistPublicSelect,
+    orderBy: { createdAt: "desc" },
+    take: ARTISTS_PAGE_SIZE + 1,
+    skip: (page - 1) * ARTISTS_PAGE_SIZE,
+  });
+
+  const hasNextPage = rows.length > ARTISTS_PAGE_SIZE;
+  const artists = hasNextPage ? rows.slice(0, ARTISTS_PAGE_SIZE) : rows;
+
+  // COUNT uniquement sur la première page pour afficher le total
+  const totalCount = isFirstPage
+    ? await prisma.tattooArtist.count({ where })
+    : undefined;
 
   return {
     artists,
     totalCount,
-    totalPages: Math.max(1, Math.ceil(totalCount / ARTISTS_PAGE_SIZE)),
+    hasNextPage,
     currentPage: page,
   };
 }

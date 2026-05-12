@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArtistCard } from "@/components/artists/artist-card";
 
-type Artist = {
+type ArtistDTO = {
   id: string;
   artistName: string | null;
   bio: string | null;
@@ -17,15 +17,15 @@ type Artist = {
 };
 
 type Props = {
-  initialArtists: Artist[];
-  initialHasMore: boolean;
+  initialArtists: ArtistDTO[];
+  initialHasNextPage: boolean;
 };
 
-export function ArtistsInfiniteGrid({ initialArtists, initialHasMore }: Props) {
+export function ArtistsInfiniteGrid({ initialArtists, initialHasNextPage }: Props) {
   const searchParams = useSearchParams();
-  const [artists, setArtists] = useState<Artist[]>(initialArtists);
+  const [artists, setArtists] = useState<ArtistDTO[]>(initialArtists);
   const [page, setPage] = useState(2);
-  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [hasNextPage, setHasNextPage] = useState(initialHasNextPage);
   const [loading, setLoading] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -33,11 +33,11 @@ export function ArtistsInfiniteGrid({ initialArtists, initialHasMore }: Props) {
   useEffect(() => {
     setArtists(initialArtists);
     setPage(2);
-    setHasMore(initialHasMore);
-  }, [initialArtists, initialHasMore]);
+    setHasNextPage(initialHasNextPage);
+  }, [initialArtists, initialHasNextPage]);
 
   useEffect(() => {
-    if (!hasMore) return;
+    if (!hasNextPage) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -51,7 +51,7 @@ export function ArtistsInfiniteGrid({ initialArtists, initialHasMore }: Props) {
     if (sentinelRef.current) observer.observe(sentinelRef.current);
     return () => observer.disconnect();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore, loading, page, searchParams]);
+  }, [hasNextPage, loading, page, searchParams]);
 
   async function loadMore() {
     setLoading(true);
@@ -59,10 +59,13 @@ export function ArtistsInfiniteGrid({ initialArtists, initialHasMore }: Props) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("page", String(page));
       const res = await fetch(`/api/artists?${params.toString()}`);
-      const data = await res.json();
+      if (!res.ok) return;
+      const data = await res.json() as { artists: ArtistDTO[]; hasNextPage: boolean };
       setArtists((prev) => [...prev, ...data.artists]);
-      setHasMore(data.currentPage < data.totalPages);
+      setHasNextPage(data.hasNextPage);
       setPage((p) => p + 1);
+    } catch {
+      // silently ignore network errors — user can scroll again to retry
     } finally {
       setLoading(false);
     }
