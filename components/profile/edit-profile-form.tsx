@@ -8,8 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { validateArtistForm } from "@/lib/validation/artist-validation";
+import type { OurFileRouter } from "@/lib/uploadthing";
+import { generateReactHelpers } from "@uploadthing/react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+
+const { useUploadThing } = generateReactHelpers<OurFileRouter>();
 
 type Style = { id: string; name: string };
 
@@ -18,6 +24,7 @@ type Props = {
     firstName: string;
     lastName: string;
     description: string;
+    avatarUrl: string | null;
   };
   initialArtist?: {
     artistName: string;
@@ -38,6 +45,12 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
   const isArtist = !!initialArtist;
 
   const [userData, setUserData] = useState(initialUser);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(initialUser.avatarUrl);
+  const [isBlobPreview, setIsBlobPreview] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const blobUrlRef = useRef<string | null>(null);
+
   const [artistData, setArtistData] = useState(initialArtist ?? {
     artistName: "",
     bio: "",
@@ -51,6 +64,14 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { startUpload, isUploading } = useUploadThing("avatarImage");
+
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    };
+  }, []);
 
   function updateUser(field: keyof typeof userData, value: string) {
     setUserData((prev) => ({ ...prev, [field]: value }));
@@ -83,14 +104,37 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
     return Object.keys(newErrors).length === 0;
   }
 
+  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+    const blobUrl = URL.createObjectURL(file);
+    blobUrlRef.current = blobUrl;
+    setPendingAvatarFile(file);
+    setAvatarPreview(blobUrl);
+    setIsBlobPreview(true);
+    e.target.value = "";
+  }
+
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
 
+    let avatarUrl: string | undefined;
+    if (pendingAvatarFile) {
+      const uploaded = await startUpload([pendingAvatarFile]);
+      if (!uploaded?.[0]) {
+        toast.error("Erreur lors de l'upload de l'avatar.");
+        setIsSubmitting(false);
+        return;
+      }
+      avatarUrl = uploaded[0].ufsUrl ?? uploaded[0].serverData?.url;
+    }
+
     const userOk = await apiFetch("/api/user/profile", {
       method: "PATCH",
-      body: userData,
+      body: { ...userData, ...(avatarUrl ? { avatarUrl } : {}) },
       errorMessage: "Une erreur est survenue.",
     });
 
@@ -122,6 +166,43 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      <section className="space-y-4">
+        <Typography tag="h3">Photo de profil</Typography>
+        <div className="flex items-center gap-5">
+          <button
+            type="button"
+            onClick={() => avatarInputRef.current?.click()}
+            className="relative size-20 overflow-hidden rounded-full bg-muted ring-2 ring-border hover:opacity-80 transition-opacity"
+          >
+            {avatarPreview ? (
+              isBlobPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarPreview} alt="Avatar" className="size-full object-cover" />
+              ) : (
+                <Image src={avatarPreview} alt="Avatar" fill className="object-cover" sizes="80px" />
+              )
+            ) : (
+              <span className="flex size-full items-center justify-center text-2xl font-bold text-muted-foreground">
+                {(userData.firstName?.[0] ?? "?").toUpperCase()}
+              </span>
+            )}
+          </button>
+          <div className="space-y-1">
+            <Button type="button" variant="outline" size="sm" onClick={() => avatarInputRef.current?.click()} disabled={isUploading}>
+              {isUploading ? "Upload en cours..." : "Changer la photo"}
+            </Button>
+            <p className="text-xs text-muted-foreground">JPG, PNG ou WebP · max 4 Mo</p>
+          </div>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+        </div>
+      </section>
+
       <section className="space-y-4">
         <Typography tag="h3">Informations personnelles</Typography>
         <div className="grid grid-cols-2 gap-4">
