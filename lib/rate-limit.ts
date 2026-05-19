@@ -9,6 +9,13 @@ function getStore(key: string): RateLimitStore {
   return stores.get(key)!;
 }
 
+function sweepExpired(store: RateLimitStore): void {
+  const now = Date.now();
+  for (const [k, v] of store) {
+    if (v.resetAt <= now) store.delete(k);
+  }
+}
+
 export type RateLimitConfig = {
   /** Identifiant unique pour cette limite (ex: "bookings", "follow") */
   id: string;
@@ -26,8 +33,10 @@ export function rateLimit(req: NextRequest, config: RateLimitConfig): NextRespon
 
   const store = getStore(config.id);
   const now = Date.now();
-  const key = ip;
 
+  if (store.size > 10_000) sweepExpired(store);
+
+  const key = ip;
   const entry = store.get(key);
 
   if (!entry || entry.resetAt <= now) {

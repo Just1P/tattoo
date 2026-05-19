@@ -122,7 +122,7 @@ export function AppSidebar() {
         <SidebarMenu>
           {session?.user && (
             <SidebarMenuItem>
-              <NotificationDropdown unreadCount={unreadNotifications} onRead={() => setUnreadNotifications(0)} />
+              <NotificationDropdown unreadCount={unreadNotifications} onRead={(delta) => setUnreadNotifications((prev) => Math.max(0, prev - delta))} />
             </SidebarMenuItem>
           )}
           <SidebarMenuItem>

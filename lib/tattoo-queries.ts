@@ -24,7 +24,7 @@ export async function getPublicTattoos(filters: TattooFeedFilters = {}) {
         style: { select: { name: true, slug: true } },
         artist: { select: { id: true, artistName: true, city: true } },
         ...(userId
-          ? { favoritedBy: { where: { userId }, select: { userId: true } } }
+          ? { favoritedBy: { where: { userId }, select: { id: true } } }
           : {}),
       },
       orderBy: { createdAt: "desc" },

@@ -20,7 +20,9 @@ function applySecurityHeaders(res: NextResponse): NextResponse {
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  if (process.env.NODE_ENV === "production") {
+    res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  }
   res.headers.set(
     "Content-Security-Policy",
     [
@@ -29,7 +31,7 @@ function applySecurityHeaders(res: NextResponse): NextResponse {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://utfs.io https://*.ufs.sh https://lh3.googleusercontent.com",
       "font-src 'self'",
-      "connect-src 'self'",
+      "connect-src 'self' https://utfs.io https://*.ufs.sh",
       "media-src 'self'",
       "frame-ancestors 'none'",
     ].join("; "),

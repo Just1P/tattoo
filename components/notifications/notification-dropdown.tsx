@@ -23,7 +23,7 @@ type Notification = {
 
 type Props = {
   unreadCount: number;
-  onRead: () => void;
+  onRead: (delta: number) => void;
 };
 
 function str(v: unknown, fallback: string): string {
@@ -77,15 +77,16 @@ export function NotificationDropdown({ unreadCount, onRead }: Props) {
     const res = await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
     if (res.ok) {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-      onRead();
+      onRead(1);
     }
   }
 
   async function markAllRead() {
     const res = await fetch("/api/notifications/read-all", { method: "PATCH" });
     if (res.ok) {
+      const count = notifications.length;
       setNotifications([]);
-      onRead();
+      onRead(count);
     }
   }
 
