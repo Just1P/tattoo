@@ -15,6 +15,30 @@ function isPublic(pathname: string): boolean {
   return false;
 }
 
+function applySecurityHeaders(res: NextResponse): NextResponse {
+  res.headers.set("X-Frame-Options", "DENY");
+  res.headers.set("X-Content-Type-Options", "nosniff");
+  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  if (process.env.NODE_ENV === "production") {
+    res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  }
+  res.headers.set(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https://utfs.io https://*.ufs.sh https://lh3.googleusercontent.com",
+      "font-src 'self'",
+      "connect-src 'self' https://utfs.io https://*.ufs.sh",
+      "media-src 'self'",
+      "frame-ancestors 'none'",
+    ].join("; "),
+  );
+  return res;
+}
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -25,16 +49,16 @@ export function proxy(req: NextRequest) {
   const isAuthenticated = !!sessionToken;
 
   if (isAuthenticated && AUTH_ROUTES.includes(pathname)) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return applySecurityHeaders(NextResponse.redirect(new URL("/", req.url)));
   }
 
   if (!isAuthenticated && !isPublic(pathname)) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+    return applySecurityHeaders(NextResponse.redirect(loginUrl));
   }
 
-  return NextResponse.next();
+  return applySecurityHeaders(NextResponse.next());
 }
 
 export const config = {

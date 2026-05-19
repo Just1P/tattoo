@@ -1,12 +1,16 @@
 import { auth } from "@/lib/auth";
 import { NotificationType, Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 type Params = Promise<{ id: string }>;
 
-export async function POST(_req: Request, { params }: { params: Params }) {
+export async function POST(req: NextRequest, { params }: { params: Params }) {
+  const limited = rateLimit(req, { id: "follow", limit: 20, windowSec: 60 });
+  if (limited) return limited;
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });

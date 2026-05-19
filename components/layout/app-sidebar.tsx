@@ -24,21 +24,23 @@ export function AppSidebar() {
   const router = useRouter();
   const role = (session?.user as { role?: string } | undefined)?.role;
 
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     if (!session?.user) return;
 
-    async function fetchUnread() {
-      const res = await fetch("/api/me/unread-count");
+    async function fetchCounts() {
+      const res = await fetch("/api/me/counts");
       if (res.ok) {
-        const { count } = await res.json();
-        setUnreadCount(count);
+        const data = await res.json();
+        setUnreadMessages(data.unreadMessages);
+        setUnreadNotifications(data.unreadNotifications);
       }
     }
 
-    fetchUnread();
-    const interval = setInterval(fetchUnread, 30000);
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000);
     return () => clearInterval(interval);
   }, [session?.user, pathname]);
 
@@ -101,9 +103,9 @@ export function AppSidebar() {
                   <Link href={href}>
                     <div className="relative">
                       <Icon />
-                      {href === "/messages" && unreadCount > 0 && (
+                      {href === "/messages" && unreadMessages > 0 && (
                         <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                          {unreadCount > 9 ? "9+" : unreadCount}
+                          {unreadMessages > 9 ? "9+" : unreadMessages}
                         </span>
                       )}
                     </div>
@@ -120,7 +122,7 @@ export function AppSidebar() {
         <SidebarMenu>
           {session?.user && (
             <SidebarMenuItem>
-              <NotificationDropdown />
+              <NotificationDropdown unreadCount={unreadNotifications} onRead={(delta) => setUnreadNotifications((prev) => Math.max(0, prev - delta))} />
             </SidebarMenuItem>
           )}
           <SidebarMenuItem>

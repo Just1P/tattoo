@@ -5,8 +5,9 @@ import { NextRequest } from "next/server";
 
 type Params = { params: Promise<{ id: string }> };
 
-const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_MS = 5000;
 const KEEPALIVE_INTERVAL_MS = 25000;
+const MAX_STREAM_DURATION_MS = 5 * 60 * 1000; // 5 minutes max par connexion
 
 export async function GET(req: NextRequest, { params }: Params) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -64,6 +65,12 @@ export async function GET(req: NextRequest, { params }: Params) {
 
       let lastDate = afterDate ?? new Date();
       let lastId = afterId ?? null;
+
+      // Fermeture automatique après MAX_STREAM_DURATION_MS pour libérer les connexions
+      const timeout = setTimeout(() => {
+        closed = true;
+        try { controller.close(); } catch { /* déjà fermé */ }
+      }, MAX_STREAM_DURATION_MS);
 
       const keepalive = setInterval(() => {
         if (closed) return;
@@ -125,6 +132,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       }
 
       clearInterval(keepalive);
+      clearTimeout(timeout);
     },
   });
 

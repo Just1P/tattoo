@@ -4,7 +4,7 @@ import Typography from "@/components/custom/Typography";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { getAllStyles } from "@/lib/artist-queries";
-import { getFavoritedTattooIds, getPublicTattoos } from "@/lib/tattoo-queries";
+import { getPublicTattoos } from "@/lib/tattoo-queries";
 import { headers } from "next/headers";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -29,14 +29,15 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
 
   const session = await auth.api.getSession({ headers: await headers() });
 
-  const [{ tattoos, totalPages, currentPage }, styles] = await Promise.all([
-    getPublicTattoos({ styleSlug: styleSlug || undefined, page }),
-    getAllStyles(),
-  ]);
-
-  const favoritedTattooIds = session
-    ? await getFavoritedTattooIds(session.user.id, tattoos.map((t) => t.id))
-    : new Set<string>();
+  const [{ tattoos, totalPages, currentPage, favoritedTattooIds }, styles] =
+    await Promise.all([
+      getPublicTattoos({
+        styleSlug: styleSlug || undefined,
+        page,
+        userId: session?.user.id,
+      }),
+      getAllStyles(),
+    ]);
 
   function buildPageUrl(p: number) {
     const ps = new URLSearchParams();
