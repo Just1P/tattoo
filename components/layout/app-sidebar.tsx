@@ -1,5 +1,6 @@
 "use client";
 
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 import {
   Sidebar,
   SidebarContent,
@@ -117,6 +118,11 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          {session?.user && (
+            <SidebarMenuItem>
+              <NotificationDropdown />
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             {session?.user ? (
               <SidebarMenuButton

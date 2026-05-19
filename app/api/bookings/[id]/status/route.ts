@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { sendBookingCancelledEmail, sendBookingConfirmedEmail } from "@/lib/email";
+import { NotificationType } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -88,17 +89,31 @@ export async function PATCH(
       );
     }
 
-    const updated = await prisma.booking.update({
-      where: { id },
-      data: {
-        status: "confirmed",
-        startAt: new Date(data.startAt),
-        endAt: new Date(data.endAt),
-        artistNote: data.artistNote ?? null,
-      },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.booking.update({
+        where: { id },
+        data: {
+          status: "confirmed",
+          startAt: new Date(data.startAt),
+          endAt: new Date(data.endAt),
+          artistNote: data.artistNote ?? null,
+        },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+      });
+      await tx.notification.create({
+        data: {
+          userId: updated.user.id,
+          type: NotificationType.booking_confirmed,
+          payload: {
+            bookingId: id,
+            artistName: artist.artistName ?? "L'artiste",
+            startAt: data.startAt,
+          },
+        },
+      });
+      return updated;
     });
 
     void sendBookingConfirmedEmail({
@@ -112,15 +127,29 @@ export async function PATCH(
     return NextResponse.json(updated);
   }
 
-  const updated = await prisma.booking.update({
-    where: { id },
-    data: {
-      status: "cancelled",
-      artistNote: data.artistNote ?? null,
-    },
-    include: {
-      user: { select: { id: true, name: true, email: true } },
-    },
+  const updated = await prisma.$transaction(async (tx) => {
+    const updated = await tx.booking.update({
+      where: { id },
+      data: {
+        status: "cancelled",
+        artistNote: data.artistNote ?? null,
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+    await tx.notification.create({
+      data: {
+        userId: updated.user.id,
+        type: NotificationType.booking_cancelled,
+        payload: {
+          bookingId: id,
+          artistName: artist.artistName ?? "L'artiste",
+          artistNote: data.artistNote ?? null,
+        },
+      },
+    });
+    return updated;
   });
 
   void sendBookingCancelledEmail({
