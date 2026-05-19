@@ -43,7 +43,7 @@ export default async function HomePage() {
     <main className="space-y-20 px-4 py-16">
       {/* Hero */}
       <section className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
-        <Typography tag="h1" align="center" size="4xl">
+        <Typography tag="h1" align="center">
           Où l&apos;art rencontre la peau
         </Typography>
         <Typography tag="p" color="muted" align="center" size="lg" className="max-w-xl">

@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { Prisma } from "@/lib/generated/prisma/client";
+import { NotificationType, Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
@@ -36,18 +36,17 @@ export async function POST(_req: Request, { params }: { params: Params }) {
         where: { id: artistId },
         data: { followersCount: { increment: 1 } },
       }),
-    ]);
-
-    await prisma.notification.create({
-      data: {
-        userId: artist.userId,
-        type: "new_follower",
-        payload: {
-          followerId: session.user.id,
-          followerName: session.user.name ?? "Un utilisateur",
+      prisma.notification.create({
+        data: {
+          userId: artist.userId,
+          type: NotificationType.new_follower,
+          payload: {
+            followerId: session.user.id,
+            followerName: session.user.name ?? "Un utilisateur",
+          },
         },
-      },
-    });
+      }),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (e) {

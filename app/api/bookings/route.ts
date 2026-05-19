@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { sendNewBookingEmail } from "@/lib/email";
+import { NotificationType } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -73,17 +74,31 @@ export async function POST(req: NextRequest) {
   }
 
   const [booking, artistUser] = await Promise.all([
-    prisma.booking.create({
-      data: {
-        artistId: artist.id,
-        userId: session.user.id,
-        tattooType: parsed.data.tattooType,
-        bodyPart: parsed.data.bodyPart,
-        size: parsed.data.size,
-        description: parsed.data.description,
-        referenceUrls: parsed.data.referenceUrls,
-        status: "pending",
-      },
+    prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.create({
+        data: {
+          artistId: artist.id,
+          userId: session.user.id,
+          tattooType: parsed.data.tattooType,
+          bodyPart: parsed.data.bodyPart,
+          size: parsed.data.size,
+          description: parsed.data.description,
+          referenceUrls: parsed.data.referenceUrls,
+          status: "pending",
+        },
+      });
+      await tx.notification.create({
+        data: {
+          userId: artist.userId,
+          type: NotificationType.booking_request,
+          payload: {
+            bookingId: booking.id,
+            clientName: session.user.name ?? "Un client",
+            bodyPart: parsed.data.bodyPart,
+          },
+        },
+      });
+      return booking;
     }),
     prisma.user.findUnique({
       where: { id: artist.userId },
@@ -100,18 +115,6 @@ export async function POST(req: NextRequest) {
       size: parsed.data.size,
     });
   }
-
-  await prisma.notification.create({
-    data: {
-      userId: artist.userId,
-      type: "booking_request",
-      payload: {
-        bookingId: booking.id,
-        clientName: session.user.name ?? "Un client",
-        bodyPart: parsed.data.bodyPart,
-      },
-    },
-  });
 
   return NextResponse.json(booking, { status: 201 });
 }

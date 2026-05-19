@@ -14,13 +14,14 @@ export async function PATCH(_req: Request, { params }: { params: Params }) {
 
   const { id } = await params;
 
-  const notification = await prisma.notification.findUnique({ where: { id } });
+  const result = await prisma.notification.updateMany({
+    where: { id, userId: session.user.id },
+    data: { read: true },
+  });
 
-  if (!notification || notification.userId !== session.user.id) {
+  if (result.count === 0) {
     return NextResponse.json({ error: "Notification introuvable" }, { status: 404 });
   }
-
-  await prisma.notification.update({ where: { id }, data: { read: true } });
 
   return NextResponse.json({ success: true });
 }

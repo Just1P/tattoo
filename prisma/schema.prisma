@@ -32,6 +32,13 @@ enum BookingStatus {
   cancelled
 }
 
+enum NotificationType {
+  booking_request
+  booking_confirmed
+  booking_cancelled
+  new_follower
+}
+
 enum DayOfWeek {
   MONDAY
   TUESDAY
@@ -267,14 +274,16 @@ model Message {
 }
 
 model Notification {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   userId    String
-  type      String   // "booking_request" | "booking_confirmed" | "booking_cancelled" | "new_follower"
-  read      Boolean  @default(false)
+  type      NotificationType
+  read      Boolean          @default(false)
   payload   Json
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
 }
 
 model Session {

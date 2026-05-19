@@ -19,21 +19,25 @@ type Notification = {
   id: string;
   type: string;
   read: boolean;
-  payload: Record<string, string>;
+  payload: Record<string, unknown>;
   createdAt: string;
 };
+
+function str(v: unknown, fallback: string): string {
+  return typeof v === "string" ? v : fallback;
+}
 
 function notificationLabel(n: Notification): string {
   const p = n.payload;
   switch (n.type) {
     case "booking_request":
-      return `Nouvelle demande de ${p.clientName ?? "un client"} — ${p.bodyPart ?? ""}`;
+      return `Nouvelle demande de ${str(p.clientName, "un client")} — ${str(p.bodyPart, "")}`;
     case "booking_confirmed":
-      return `Réservation confirmée par ${p.artistName ?? "l'artiste"}`;
+      return `Réservation confirmée par ${str(p.artistName, "l'artiste")}`;
     case "booking_cancelled":
-      return `Réservation annulée par ${p.artistName ?? "l'artiste"}`;
+      return `Réservation annulée par ${str(p.artistName, "l'artiste")}`;
     case "new_follower":
-      return `${p.followerName ?? "Quelqu'un"} vous suit maintenant`;
+      return `${str(p.followerName, "Quelqu'un")} vous suit maintenant`;
     default:
       return "Nouvelle notification";
   }
@@ -74,13 +78,13 @@ export function NotificationDropdown() {
   }, [pathname]);
 
   async function markRead(id: string) {
-    await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    const res = await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
+    if (res.ok) setNotifications((prev) => prev.filter((n) => n.id !== id));
   }
 
   async function markAllRead() {
-    await fetch("/api/notifications/read-all", { method: "PATCH" });
-    setNotifications([]);
+    const res = await fetch("/api/notifications/read-all", { method: "PATCH" });
+    if (res.ok) setNotifications([]);
   }
 
   const count = notifications.length;
@@ -130,7 +134,7 @@ export function NotificationDropdown() {
             >
               <span className="text-sm">{notificationLabel(n)}</span>
               <span className="text-xs text-muted-foreground">
-                {new Date(n.createdAt).toLocaleDateString("fr-FR", {
+                {new Date(n.createdAt).toLocaleString("fr-FR", {
                   day: "numeric",
                   month: "short",
                   hour: "2-digit",
