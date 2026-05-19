@@ -8,12 +8,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenuButton,
-} from "@/components/ui/sidebar";
+import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { Bell } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type Notification = {
   id: string;
@@ -21,6 +19,11 @@ type Notification = {
   read: boolean;
   payload: Record<string, unknown>;
   createdAt: string;
+};
+
+type Props = {
+  unreadCount: number;
+  onRead: () => void;
 };
 
 function str(v: unknown, fallback: string): string {
@@ -57,47 +60,44 @@ function notificationHref(n: Notification): string {
   }
 }
 
-export function NotificationDropdown() {
+export function NotificationDropdown({ unreadCount, onRead }: Props) {
   const router = useRouter();
-  const pathname = usePathname();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchNotifications() {
+  async function handleOpen(isOpen: boolean) {
+    setOpen(isOpen);
+    if (isOpen) {
       const res = await fetch("/api/notifications");
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data);
-      }
+      if (res.ok) setNotifications(await res.json());
     }
-
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [pathname]);
+  }
 
   async function markRead(id: string) {
     const res = await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
-    if (res.ok) setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (res.ok) {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      onRead();
+    }
   }
 
   async function markAllRead() {
     const res = await fetch("/api/notifications/read-all", { method: "PATCH" });
-    if (res.ok) setNotifications([]);
+    if (res.ok) {
+      setNotifications([]);
+      onRead();
+    }
   }
 
-  const count = notifications.length;
-
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={handleOpen}>
       <DropdownMenuTrigger asChild>
         <SidebarMenuButton tooltip="Notifications">
           <div className="relative">
             <Bell />
-            {count > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                {count > 9 ? "9+" : count}
+                {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </div>
@@ -107,7 +107,7 @@ export function NotificationDropdown() {
       <DropdownMenuContent side="right" align="end" className="w-80">
         <div className="flex items-center justify-between px-2 py-1.5">
           <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
-          {count > 0 && (
+          {notifications.length > 0 && (
             <button
               onClick={markAllRead}
               className="text-xs text-muted-foreground hover:text-foreground"
@@ -117,7 +117,7 @@ export function NotificationDropdown() {
           )}
         </div>
         <DropdownMenuSeparator />
-        {count === 0 ? (
+        {notifications.length === 0 ? (
           <p className="px-3 py-4 text-center text-sm text-muted-foreground">
             Aucune notification
           </p>

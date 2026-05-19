@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { sendNewBookingEmail } from "@/lib/email";
 import { NotificationType } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -19,6 +20,9 @@ const bookingRequestSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { id: "bookings", limit: 5, windowSec: 60 });
+  if (limited) return limited;
+
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {

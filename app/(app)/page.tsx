@@ -4,7 +4,7 @@ import Typography from "@/components/custom/Typography";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { getFilteredArtists } from "@/lib/artist-queries";
-import { getFavoritedTattooIds, getPublicTattoos } from "@/lib/tattoo-queries";
+import { getPublicTattoos } from "@/lib/tattoo-queries";
 import { headers } from "next/headers";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -27,16 +27,12 @@ export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const role = (session?.user as { role?: string } | undefined)?.role;
 
-  const [{ tattoos }, { artists }] = await Promise.all([
-    getPublicTattoos({ page: 1 }),
+  const [{ tattoos, favoritedTattooIds }, { artists }] = await Promise.all([
+    getPublicTattoos({ page: 1, userId: session?.user.id }),
     getFilteredArtists({}),
   ]);
 
   const previewTattoos = tattoos.slice(0, 8);
-
-  const favoritedTattooIds = session
-    ? await getFavoritedTattooIds(session.user.id, previewTattoos.map((t) => t.id))
-    : new Set<string>();
   const previewArtists = artists.slice(0, 6);
 
   return (

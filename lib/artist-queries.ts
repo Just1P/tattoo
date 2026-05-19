@@ -69,9 +69,9 @@ export async function getFilteredArtists(filters: ArtistFilters = {}) {
   };
 }
 
-export async function getAllStyles() {
+export const getAllStyles = cache(async function getAllStyles() {
   return prisma.style.findMany({ orderBy: { name: "asc" } });
-}
+});
 
 export const getPublicArtist = cache(async function getPublicArtist(id: string) {
   return prisma.tattooArtist.findFirst({

@@ -111,6 +111,8 @@ model TattooArtist {
   bookings       Booking[]
   weeklySlots    WeeklySlot[]
   blockedPeriods BlockedPeriod[]
+
+  @@index([verified, createdAt])
 }
 
 model Tattoo {
@@ -129,6 +131,10 @@ model Tattoo {
   artist      TattooArtist     @relation(fields: [artistId], references: [id], onDelete: Cascade)
   style       Style            @relation(fields: [styleId], references: [id])
   favoritedBy FavoriteTattoo[]
+
+  @@index([artistId, pinned, position])
+  @@index([styleId, createdAt])
+  @@index([createdAt])
 }
 
 model Style {
@@ -169,6 +175,7 @@ model ArtistFollower {
   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([artistId, userId])
+  @@index([userId])
 }
 
 model FavoriteTattoo {
@@ -206,6 +213,9 @@ model Booking {
   // Relations
   artist TattooArtist @relation(fields: [artistId], references: [id], onDelete: Cascade)
   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([artistId, status])
+  @@index([userId, status])
 }
 
 // Créneau récurrent hebdomadaire (ex: lundi 10h-18h)
@@ -257,6 +267,7 @@ model ConversationParticipant {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId])
+  @@index([userId])
 }
 
 model Message {
@@ -271,6 +282,9 @@ model Message {
   // Relations
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, readAt])
 }
 
 model Notification {
