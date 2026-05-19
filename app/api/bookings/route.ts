@@ -101,5 +101,17 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  await prisma.notification.create({
+    data: {
+      userId: artist.userId,
+      type: "booking_request",
+      payload: {
+        bookingId: booking.id,
+        clientName: session.user.name ?? "Un client",
+        bodyPart: parsed.data.bodyPart,
+      },
+    },
+  });
+
   return NextResponse.json(booking, { status: 201 });
 }

@@ -38,6 +38,17 @@ export async function POST(_req: Request, { params }: { params: Params }) {
       }),
     ]);
 
+    await prisma.notification.create({
+      data: {
+        userId: artist.userId,
+        type: "new_follower",
+        payload: {
+          followerId: session.user.id,
+          followerName: session.user.name ?? "Un utilisateur",
+        },
+      },
+    });
+
     return NextResponse.json({ success: true });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {

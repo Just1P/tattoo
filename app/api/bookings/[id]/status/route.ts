@@ -109,6 +109,18 @@ export async function PATCH(
       artistNote: data.artistNote,
     });
 
+    await prisma.notification.create({
+      data: {
+        userId: updated.user.id,
+        type: "booking_confirmed",
+        payload: {
+          bookingId: id,
+          artistName: artist.artistName ?? "L'artiste",
+          startAt: data.startAt,
+        },
+      },
+    });
+
     return NextResponse.json(updated);
   }
 
@@ -128,6 +140,18 @@ export async function PATCH(
     clientName: updated.user.name ?? "Client",
     artistName: artist.artistName ?? "L'artiste",
     artistNote: data.artistNote,
+  });
+
+  await prisma.notification.create({
+    data: {
+      userId: updated.user.id,
+      type: "booking_cancelled",
+      payload: {
+        bookingId: id,
+        artistName: artist.artistName ?? "L'artiste",
+        artistNote: data.artistNote ?? null,
+      },
+    },
   });
 
   return NextResponse.json(updated);
