@@ -2,6 +2,7 @@
 
 import { FormField } from "@/components/form/form-field";
 import { StyleSelector } from "@/components/form/style-selector";
+import { OnboardingPreview } from "@/components/onboarding/onboarding-preview";
 import Typography from "@/components/custom/Typography";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,17 +10,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { artistValidation } from "@/lib/validation/artist-validation";
+import {
+  IconBrush,
+  IconCurrencyEuro,
+  IconFileText,
+  IconMapPin,
+  IconPalette,
+} from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Style = { id: string; name: string };
 
 const STEPS = [
-  "Identité artistique",
-  "Localisation",
-  "Informations légales",
-  "Tarifs",
-  "Styles pratiqués",
+  { icon: IconPalette, title: "Identité artistique", subtitle: "Comment tes futurs clients vont te reconnaître ?" },
+  { icon: IconMapPin, title: "Localisation", subtitle: "Où peut-on venir se faire tatouer ?" },
+  { icon: IconFileText, title: "Informations légales", subtitle: "On vérifie vite fait que tu es en règle." },
+  { icon: IconCurrencyEuro, title: "Tes tarifs", subtitle: "Une fourchette suffit, tu pourras l'ajuster plus tard." },
+  { icon: IconBrush, title: "Tes styles", subtitle: "Sélectionne ce qui te représente le mieux." },
 ];
 
 const TOTAL_STEPS = STEPS.length;
@@ -110,11 +118,13 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
   }
 
   const progressPercent = Math.round((step / TOTAL_STEPS) * 100);
+  const currentStep = STEPS[step - 1];
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
+      <div className="grid w-full max-w-4xl gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+        <Card className="w-full">
+          <CardHeader>
           <div className="mb-2 flex items-center justify-between">
             <Typography tag="p" color="muted">
               Étape {step} sur {TOTAL_STEPS}
@@ -130,11 +140,17 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
             />
           </div>
           <CardTitle className="mt-4">
-            <Typography tag="h3">{STEPS[step - 1]}</Typography>
+            <Typography tag="h3" className="flex items-center gap-2">
+              <currentStep.icon className="size-5 text-primary" />
+              {currentStep.title}
+            </Typography>
           </CardTitle>
+          <Typography tag="p" color="muted">
+            {currentStep.subtitle}
+          </Typography>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent key={step} className="animate-in fade-in-0 slide-in-from-right-2 space-y-4 duration-300">
           {step === 1 && (
             <>
               <FormField id="artistName" label="Nom / pseudo artistique *" error={errors.artistName}>
@@ -235,6 +251,12 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
                 onToggle={toggleStyle}
                 error={errors.styleIds}
               />
+              <Typography tag="p" color="muted" className="flex items-center gap-1.5">
+                {formData.styleIds.length > 0 && <IconBrush className="size-4" />}
+                {formData.styleIds.length === 0
+                  ? "Aucun style sélectionné pour le moment"
+                  : `${formData.styleIds.length} style${formData.styleIds.length > 1 ? "s" : ""} sélectionné${formData.styleIds.length > 1 ? "s" : ""}`}
+              </Typography>
             </>
           )}
 
@@ -253,7 +275,21 @@ export function OnboardingForm({ styles }: { styles: Style[] }) {
             )}
           </div>
         </CardContent>
-      </Card>
+        </Card>
+
+        <div className="order-first lg:order-last">
+          <OnboardingPreview
+            artistName={formData.artistName}
+            bio={formData.bio}
+            city={formData.city}
+            priceMin={formData.priceMin}
+            priceMax={formData.priceMax}
+            styleIds={formData.styleIds}
+            styles={styles}
+            progressPercent={progressPercent}
+          />
+        </div>
+      </div>
     </div>
   );
 }
