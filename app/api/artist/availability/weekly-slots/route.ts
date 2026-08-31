@@ -1,4 +1,5 @@
 import { requireArtist } from "@/lib/api-helpers";
+import { doTimeRangesOverlap } from "@/lib/availability";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -42,6 +43,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "Données invalides", details: parsed.error.issues },
       { status: 422 }
+    );
+  }
+
+  const existingSlots = await prisma.weeklySlot.findMany({
+    where: { artistId: artist.id, day: parsed.data.day },
+  });
+  const hasOverlap = existingSlots.some((slot) =>
+    doTimeRangesOverlap(
+      parsed.data.startTime,
+      parsed.data.endTime,
+      slot.startTime,
+      slot.endTime,
+    ),
+  );
+  if (hasOverlap) {
+    return NextResponse.json(
+      { error: "Ce créneau chevauche un créneau déjà existant" },
+      { status: 409 },
     );
   }
 
