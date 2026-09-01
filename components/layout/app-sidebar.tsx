@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { signOut, useSession } from "@/lib/auth-client";
-import { BookOpen, CalendarDays, Images, LayoutDashboard, LogIn, LogOut, MessageCircle, Rss, Search, ShieldCheck, User } from "lucide-react";
+import { BookOpen, CalendarDays, Images, LayoutDashboard, LogIn, LogOut, Rss, Search, ShieldCheck, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -24,7 +24,6 @@ export function AppSidebar() {
   const router = useRouter();
   const role = (session?.user as { role?: string } | undefined)?.role;
 
-  const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
@@ -34,7 +33,6 @@ export function AppSidebar() {
       const res = await fetch("/api/me/counts");
       if (res.ok) {
         const data = await res.json();
-        setUnreadMessages(data.unreadMessages);
         setUnreadNotifications(data.unreadNotifications);
       }
     }
@@ -59,14 +57,12 @@ export function AppSidebar() {
           { label: "Portfolio", href: "/dashboard/portfolio", icon: Images },
           { label: "Disponibilités", href: "/dashboard/availability", icon: CalendarDays },
           { label: "Réservations", href: "/dashboard/bookings", icon: BookOpen },
-          { label: "Messages", href: "/messages", icon: MessageCircle },
         ]
       : []),
     ...(role === "client"
       ? [
           { label: "Mon profil", href: "/profile", icon: User },
           { label: "Mes rendez-vous", href: "/bookings", icon: BookOpen },
-          { label: "Messages", href: "/messages", icon: MessageCircle },
         ]
       : []),
     ...(role === "admin"
@@ -101,14 +97,7 @@ export function AppSidebar() {
                   tooltip={label}
                 >
                   <Link href={href}>
-                    <div className="relative">
-                      <Icon />
-                      {href === "/messages" && unreadMessages > 0 && (
-                        <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                          {unreadMessages > 9 ? "9+" : unreadMessages}
-                        </span>
-                      )}
-                    </div>
+                    <Icon />
                     <span>{label}</span>
                   </Link>
                 </SidebarMenuButton>
