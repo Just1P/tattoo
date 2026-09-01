@@ -5,6 +5,11 @@ export default defineConfig({
   globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
+  reporter: [
+    ["list"],
+    ["html", { outputFolder: "docs/tests/rapport-e2e/html", open: "never" }],
+    ["json", { outputFile: "docs/tests/rapport-e2e/results.json" }],
+  ],
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
