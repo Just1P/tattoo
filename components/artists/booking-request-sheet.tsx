@@ -167,7 +167,7 @@ export function BookingRequestSheet({ artistId, artistName }: Props) {
             />
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                Plus votre description est précise, mieux l'artiste pourra estimer
+                Plus votre description est précise, mieux l&apos;artiste pourra estimer
                 le temps nécessaire.
               </p>
               <span className={cn("text-xs shrink-0 ml-2", description.length < 10 ? "text-destructive" : "text-muted-foreground")}>

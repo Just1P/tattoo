@@ -56,7 +56,7 @@ export default async function ClientBookingsPage() {
       {bookings.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
           <p className="text-sm text-muted-foreground">
-            Vous n'avez pas encore fait de demande de rendez-vous.
+            Vous n&apos;avez pas encore fait de demande de rendez-vous.
           </p>
         </div>
       ) : (
@@ -120,7 +120,7 @@ export default async function ClientBookingsPage() {
 
               {booking.artistNote && (
                 <div className="rounded-md bg-muted px-3 py-2 text-sm">
-                  <span className="text-muted-foreground">Message de l'artiste : </span>
+                  <span className="text-muted-foreground">Message de l&apos;artiste : </span>
                   {booking.artistNote}
                 </div>
               )}
