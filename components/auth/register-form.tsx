@@ -67,12 +67,17 @@ export function RegisterForm() {
   }
 
   async function onSubmit(values: RegisterValues) {
+    // `role` a input: false côté serveur (voir lib/auth.ts) pour empêcher
+    // qu'un appel direct à l'API impose un rôle arbitraire (ex: "admin").
+    // Le cast est nécessaire car le typage officiel du SDK exclut ce champ
+    // par design ; le serveur revalide et filtre la valeur indépendamment
+    // dans databaseHooks.user.create.before (liste blanche client/artist).
     const { error } = await signUp.email({
       name: values.name,
       email: values.email,
       password: values.password,
       role: values.role,
-    });
+    } as Parameters<typeof signUp.email>[0] & { role: string });
 
     if (error) {
       toast.error(getAuthErrorMessage(error.code ?? ""));

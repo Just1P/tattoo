@@ -27,7 +27,13 @@ export const auth = betterAuth({
         type: "string",
         required: false,
         defaultValue: "client",
-        input: true,
+        // Jamais accepté tel quel depuis la requête client : voir
+        // databaseHooks.user.create.before, qui revalide et filtre la
+        // valeur contre une liste blanche avant création. Sans ce
+        // "input: false", un appel direct à l'API d'inscription avec
+        // { role: "admin" } créait un compte administrateur (corrigé le
+        // 2026-09-01, voir docs/securite/test-securite.md).
+        input: false,
       },
     },
   },
@@ -35,6 +41,18 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
+        before: async (user, context) => {
+          const requestedRole = (context?.body as { role?: unknown } | undefined)
+            ?.role;
+          const ALLOWED_SIGNUP_ROLES = ["client", "artist"] as const;
+          const role = ALLOWED_SIGNUP_ROLES.includes(
+            requestedRole as (typeof ALLOWED_SIGNUP_ROLES)[number],
+          )
+            ? (requestedRole as "client" | "artist")
+            : "client";
+
+          return { data: { ...user, role } };
+        },
         after: async (user) => {
           const typedUser = user as { role?: UserRole; passwordHash?: string | null };
 

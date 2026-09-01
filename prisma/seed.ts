@@ -62,9 +62,12 @@ async function ensureUser(email: string, name: string, role: "artist" | "client"
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return existing;
 
+  // `role` a input: false côté serveur (voir lib/auth.ts) : le typage
+  // officiel de l'API exclut ce champ par design, il est revalidé
+  // indépendamment côté serveur (liste blanche client/artist).
   const { user } = await auth.api.signUpEmail({
     body: { email, password: DEMO_PASSWORD, name, role },
-  });
+  } as Parameters<typeof auth.api.signUpEmail>[0]);
   return prisma.user.findUniqueOrThrow({ where: { id: user.id } });
 }
 
