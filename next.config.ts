@@ -1,6 +1,17 @@
+import { securityHeaders } from "@/lib/security-headers";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        // Couvre toutes les routes, y compris /api/*, que proxy.ts exclut
+        // volontairement de son matcher (voir proxy.ts).
+        source: "/:path*",
+        headers: securityHeaders(),
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "utfs.io" },
