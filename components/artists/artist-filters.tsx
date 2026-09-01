@@ -37,13 +37,19 @@ export function ArtistFilters({ styles, defaultValues }: Props) {
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
+  // Resynchronise les champs quand l'URL change en dehors de ce composant
+  // (navigation retour/avant du navigateur). Ajusté pendant le rendu plutôt
+  // que dans un effect pour éviter un rendu en cascade.
+  const searchParamsString = searchParams.toString();
+  const [prevSearchParamsString, setPrevSearchParamsString] = useState(searchParamsString);
+  if (searchParamsString !== prevSearchParamsString) {
+    setPrevSearchParamsString(searchParamsString);
     setSearch(searchParams.get("search") ?? "");
     setCity(searchParams.get("city") ?? "");
     setStyleSlug(searchParams.get("styleSlug") ?? "");
     setMinPrice(searchParams.get("minPrice") ?? "");
     setMaxPrice(searchParams.get("maxPrice") ?? "");
-  }, [searchParams]);
+  }
 
   const hasFilters = search || city || styleSlug || minPrice || maxPrice;
 
