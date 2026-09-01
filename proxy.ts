@@ -1,3 +1,4 @@
+import { securityHeaders } from "@/lib/security-headers";
 import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_ROUTES = ["/", "/artists", "/feed", "/login", "/register"];
@@ -16,26 +17,9 @@ function isPublic(pathname: string): boolean {
 }
 
 function applySecurityHeaders(res: NextResponse): NextResponse {
-  res.headers.set("X-Frame-Options", "DENY");
-  res.headers.set("X-Content-Type-Options", "nosniff");
-  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  if (process.env.NODE_ENV === "production") {
-    res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  for (const { key, value } of securityHeaders()) {
+    res.headers.set(key, value);
   }
-  res.headers.set(
-    "Content-Security-Policy",
-    [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://utfs.io https://*.ufs.sh https://lh3.googleusercontent.com",
-      "font-src 'self'",
-      "connect-src 'self' https://utfs.io https://*.ufs.sh",
-      "media-src 'self'",
-      "frame-ancestors 'none'",
-    ].join("; "),
-  );
   return res;
 }
 
