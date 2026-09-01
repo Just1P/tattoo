@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { MESSAGING_ENABLED } from "@/lib/feature-flags";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
@@ -6,6 +7,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 export async function GET() {
+  if (!MESSAGING_ENABLED) {
+    return NextResponse.json({ error: "Fonctionnalité indisponible" }, { status: 404 });
+  }
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session)
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -56,6 +61,10 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  if (!MESSAGING_ENABLED) {
+    return NextResponse.json({ error: "Fonctionnalité indisponible" }, { status: 404 });
+  }
+
   const limited = rateLimit(req, { id: "conversations", limit: 10, windowSec: 60 });
   if (limited) return limited;
 

@@ -1,3 +1,4 @@
+import { MESSAGING_ENABLED } from "@/lib/feature-flags";
 import { securityHeaders } from "@/lib/security-headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -31,6 +32,10 @@ export function proxy(req: NextRequest) {
     req.cookies.get(`__Secure-${SESSION_COOKIE}`)?.value;
 
   const isAuthenticated = !!sessionToken;
+
+  if (!MESSAGING_ENABLED && pathname.startsWith("/messages")) {
+    return applySecurityHeaders(NextResponse.redirect(new URL("/", req.url)));
+  }
 
   if (isAuthenticated && AUTH_ROUTES.includes(pathname)) {
     return applySecurityHeaders(NextResponse.redirect(new URL("/", req.url)));

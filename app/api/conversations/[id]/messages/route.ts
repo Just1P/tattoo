@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { sendNewMessageEmail } from "@/lib/email";
+import { MESSAGING_ENABLED } from "@/lib/feature-flags";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { headers } from "next/headers";
@@ -13,6 +14,10 @@ type Params = { params: Promise<{ id: string }> };
 const PAGE_SIZE = 30;
 
 export async function GET(req: NextRequest, { params }: Params) {
+  if (!MESSAGING_ENABLED) {
+    return NextResponse.json({ error: "Fonctionnalité indisponible" }, { status: 404 });
+  }
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session)
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -71,6 +76,10 @@ const messageSchema = z
   });
 
 export async function POST(req: NextRequest, { params }: Params) {
+  if (!MESSAGING_ENABLED) {
+    return NextResponse.json({ error: "Fonctionnalité indisponible" }, { status: 404 });
+  }
+
   const limited = rateLimit(req, { id: "messages", limit: 30, windowSec: 60 });
   if (limited) return limited;
 

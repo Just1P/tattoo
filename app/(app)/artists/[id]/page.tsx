@@ -1,7 +1,6 @@
 import { ArtistPortfolioGrid } from "@/components/artists/artist-portfolio-grid";
 import { ArtistProfileHeader } from "@/components/artists/artist-profile-header";
 import { BookingRequestSheet } from "@/components/artists/booking-request-sheet";
-import { ContactButton } from "@/components/artists/contact-button";
 import { FollowButton } from "@/components/artists/follow-button";
 import Typography from "@/components/custom/Typography";
 import { auth } from "@/lib/auth";
@@ -75,7 +74,6 @@ export default async function ArtistPublicPage({ params }: Props) {
               artistId={artist.id}
               artistName={artist.artistName}
             />
-            <ContactButton artistUserId={artist.userId} />
             {session?.user.id !== artist.userId && (
               <FollowButton artistId={artist.id} initialIsFollowed={isFollowed} />
             )}

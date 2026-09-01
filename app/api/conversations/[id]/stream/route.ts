@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { MESSAGING_ENABLED } from "@/lib/feature-flags";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
@@ -10,6 +11,10 @@ const KEEPALIVE_INTERVAL_MS = 25000;
 const MAX_STREAM_DURATION_MS = 5 * 60 * 1000; // 5 minutes max par connexion
 
 export async function GET(req: NextRequest, { params }: Params) {
+  if (!MESSAGING_ENABLED) {
+    return new Response("Fonctionnalité indisponible", { status: 404 });
+  }
+
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return new Response("Non authentifié", { status: 401 });
