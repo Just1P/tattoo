@@ -29,18 +29,34 @@ Le nommage « J1 » à « J7 » suggérait initialement sept jours calendaires c
 - Le ticket #88 (audit IDOR, J4) prévoyait de trouver **et corriger** une faille — l'audit a conclu que la route `/api/bookings/[id]/status` était **déjà sécurisée**. Plutôt que de fermer le ticket sans rien produire pour la soutenance, le travail a été réorienté vers #87 (rate limiting sur l'authentification, hors périmètre initial mais découvert pendant l'audit), qui a révélé une vraie faille critique — devenue la base du test de sécurité documenté en #89.
 - Deux issues préexistantes (#57, #59) se sont avérées déjà résolues dans le code lors du nettoyage du ticket #94 (J6) — clôturées avec référence au commit qui les avait réellement corrigées, plutôt que rouvertes ou dupliquées.
 
+## Stratégie de branches et environnements
+
+Trois branches longues, chacune reliée à un environnement de déploiement Vercel distinct :
+
+| Branche   | Rôle                                            | Déploiement Vercel |
+|-----------|--------------------------------------------------|---------------------|
+| `dev`     | Intégration des tickets. Branche par défaut, cible des PR de feature. | Preview (URL stable `*-git-dev-*.vercel.app`) |
+| `staging` | Validation pré-prod sur un environnement complet avant mise en ligne. | Preview (URL stable `*-git-staging-*.vercel.app`) |
+| `main`    | Production.                                      | Production (domaine réel) |
+
+Flux de promotion : `<numéro-issue>-<slug>` → PR → `dev` → (PR groupée) → `staging` → (PR de mise en production) → `main`.
+
+La CI (`.github/workflows/ci.yml`) tourne sur les PR et les push vers ces trois branches (`lint`, `typecheck`, `test`) ; `e2e` tourne uniquement sur push (jamais sur PR, trop lent à rejouer à chaque commit), sur les trois branches, pour valider chaque étape de promotion avant qu'elle n'atteigne la prod.
+
+Vercel déploie automatiquement toute branche poussée sur GitHub : `main` est configurée comme branche de production dans les réglages du projet (Settings → Git → Production Branch), `dev` et `staging` reçoivent chacune une URL de preview stable propre à la branche, sans configuration supplémentaire.
+
 ## Definition of Done
 
 Un ticket n'est considéré terminé que si **toutes** ces conditions sont réunies :
 
-1. **Branche dédiée** créée depuis `main` à jour, nommée `<numéro-issue>-<slug>`
+1. **Branche dédiée** créée depuis `dev` à jour, nommée `<numéro-issue>-<slug>`
 2. **Implémentation** conforme aux tâches et critères d'acceptation de l'issue
 3. **Tests** : unitaires et/ou E2E ajoutés ou mis à jour si le comportement change ; vérification empirique quand c'est pertinent (ex: `curl -I` pour confirmer des headers HTTP, requêtes réelles pour un test de sécurité)
 4. **Vérification locale** avant commit : `pnpm lint`, `pnpm typecheck`, `pnpm test`, et `pnpm test:e2e` si le parcours concerné est touché — tous verts
 5. **Commit** avec message explicite (contexte + ce qui change) et `Closes #<numéro>`
 6. **Pull request** ouverte avec description résumant le changement et la vérification faite, milestone et labels posés
 7. **CI verte** (`lint`, `typecheck`, `test`, `e2e` si applicable, déploiement preview Vercel) avant toute fusion
-8. **Fusion en squash**, branche supprimée, `main` resynchronisé avant le ticket suivant
+8. **Fusion en squash**, branche supprimée, `dev` resynchronisé avant le ticket suivant
 9. **Documentation** mise à jour si le ticket en prévoyait une (`docs/`)
 
 **Exemple vérifiable** — ticket #86 (headers de sécurité sur `/api/*`) :
