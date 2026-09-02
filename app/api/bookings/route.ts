@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { sendNewBookingEmail } from "@/lib/email";
-import { NotificationType } from "@/lib/generated/prisma/client";
+import { NotificationType, Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { bookingRequestSchema } from "@/lib/validation/booking-schema";
@@ -65,38 +65,57 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const [booking, artistUser] = await Promise.all([
-    prisma.$transaction(async (tx) => {
-      const booking = await tx.booking.create({
-        data: {
-          artistId: artist.id,
-          userId: session.user.id,
-          tattooType: parsed.data.tattooType,
-          bodyPart: parsed.data.bodyPart,
-          size: parsed.data.size,
-          description: parsed.data.description,
-          referenceUrls: parsed.data.referenceUrls,
-          status: "pending",
-        },
-      });
-      await tx.notification.create({
-        data: {
-          userId: artist.userId,
-          type: NotificationType.booking_request,
-          payload: {
-            bookingId: booking.id,
-            clientName: session.user.name ?? "Un client",
+  let booking, artistUser;
+  try {
+    [booking, artistUser] = await Promise.all([
+      prisma.$transaction(async (tx) => {
+        const booking = await tx.booking.create({
+          data: {
+            artistId: artist.id,
+            userId: session.user.id,
+            tattooType: parsed.data.tattooType,
             bodyPart: parsed.data.bodyPart,
+            size: parsed.data.size,
+            description: parsed.data.description,
+            referenceUrls: parsed.data.referenceUrls,
+            status: "pending",
           },
-        },
-      });
-      return booking;
-    }),
-    prisma.user.findUnique({
-      where: { id: artist.userId },
-      select: { email: true },
-    }),
-  ]);
+        });
+        await tx.notification.create({
+          data: {
+            userId: artist.userId,
+            type: NotificationType.booking_request,
+            payload: {
+              bookingId: booking.id,
+              clientName: session.user.name ?? "Un client",
+              bodyPart: parsed.data.bodyPart,
+            },
+          },
+        });
+        return booking;
+      }),
+      prisma.user.findUnique({
+        where: { id: artist.userId },
+        select: { email: true },
+      }),
+    ]);
+  } catch (error) {
+    // Filet de sécurité contre la race condition du contrôle "existing"
+    // ci-dessus (TOCTOU) : deux requêtes strictement simultanées peuvent
+    // toutes deux le passer avant qu'aucune n'ait committé. L'index unique
+    // partiel en base (migration 20260902084328) rejette la seconde
+    // écriture avec une violation de contrainte.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "Vous avez déjà une demande en attente auprès de cet artiste" },
+        { status: 409 },
+      );
+    }
+    throw error;
+  }
 
   if (artistUser) {
     void sendNewBookingEmail({
