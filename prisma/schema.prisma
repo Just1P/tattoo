@@ -216,6 +216,10 @@ model Booking {
 
   @@index([artistId, status])
   @@index([userId, status])
+  // Un index unique partiel (artistId, userId) WHERE status='pending' existe
+  // aussi en base, ajouté par migration SQL brute : Prisma ne représente pas
+  // les index partiels dans son DSL. Voir
+  // prisma/migrations/20260902084328_booking_pending_unique_index/.
 }
 
 // Créneau récurrent hebdomadaire (ex: lundi 10h-18h)
