@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [dev, staging, main]
   push:
-    branches: [main]
+    branches: [dev, staging, main]
 
 jobs:
   lint:
@@ -49,10 +49,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test
 
-  # E2E uniquement sur main : plus lent (build + navigateur + base réelle),
-  # inutile de le rejouer sur chaque commit de PR.
+  # E2E uniquement sur push (jamais sur PR) : plus lent (build + navigateur +
+  # base réelle), inutile de le rejouer sur chaque commit de PR. Tourne sur
+  # push dev/staging/main pour valider chaque étape de promotion
+  # (dev → staging → main) avant qu'elle n'atteigne la prod.
   e2e:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && contains(fromJSON('["refs/heads/dev", "refs/heads/staging", "refs/heads/main"]'), github.ref)
     runs-on: ubuntu-latest
     services:
       postgres:
