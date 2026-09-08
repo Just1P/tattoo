@@ -7,7 +7,7 @@ function getResend() {
 }
 
 const FROM =
-  process.env.EMAIL_FROM ?? "Tattoo Pro <onboarding@resend.dev>";
+  process.env.EMAIL_FROM ?? "Tattoo Me <onboarding@resend.dev>";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 function esc(str: string) {
@@ -23,7 +23,7 @@ function wrap(body: string) {
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/></head><body style="font-family:sans-serif;color:#111;max-width:600px;margin:0 auto;padding:24px">
 ${body}
 <hr style="margin-top:40px;border:none;border-top:1px solid #eee"/>
-<p style="color:#888;font-size:12px">Tattoo Pro — <a href="${BASE_URL}" style="color:#888">tattoo-pro.fr</a></p>
+<p style="color:#888;font-size:12px">Tattoo Me — <a href="${BASE_URL}" style="color:#888">tattoo-me.xyz</a></p>
 </body></html>`;
 }
 
@@ -188,7 +188,7 @@ export async function sendProfileApprovedEmail({
     html: wrap(`
       <h2 style="margin-bottom:8px">Profil approuvé ✅</h2>
       <p>Félicitations <strong>${esc(artistName)}</strong> !</p>
-      <p>Votre profil artiste a été vérifié et est désormais visible par tous les clients sur Tattoo Pro.</p>
+      <p>Votre profil artiste a été vérifié et est désormais visible par tous les clients sur Tattoo Me.</p>
       ${btn(link, "Voir mon profil public")}
     `),
   });

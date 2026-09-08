@@ -10,11 +10,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Feed — Dernières œuvres · Tattoo Pro",
+  title: "Feed — Dernières œuvres",
   description:
     "Parcourez les dernières créations des tatoueurs de la plateforme, filtrées par style.",
   openGraph: {
-    title: "Feed — Dernières œuvres · Tattoo Pro",
+    title: "Feed — Dernières œuvres · Tattoo Me",
     description:
       "Parcourez les dernières créations des tatoueurs de la plateforme, filtrées par style.",
   },

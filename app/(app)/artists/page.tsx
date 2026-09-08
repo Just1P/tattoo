@@ -8,11 +8,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Artistes tatoueurs · Tattoo Pro",
+  title: "Artistes tatoueurs",
   description:
     "Trouvez votre prochain tatoueur parmi notre sélection d'artistes vérifiés. Filtrez par style, ville et budget.",
   openGraph: {
-    title: "Artistes tatoueurs · Tattoo Pro",
+    title: "Artistes tatoueurs — Tattoo Me",
     description:
       "Trouvez votre prochain tatoueur parmi notre sélection d'artistes vérifiés. Filtrez par style, ville et budget.",
   },

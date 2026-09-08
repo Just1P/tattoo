@@ -12,14 +12,14 @@ import type { Metadata } from "next";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Tattoo Pro — Où l'art rencontre la peau",
+  title: "Où l'art rencontre la peau",
   description:
     "Découvrez des artistes tatoueurs d'exception, explorez leurs œuvres et trouvez l'inspiration pour votre prochain tatouage.",
   openGraph: {
-    title: "Tattoo Pro — Où l'art rencontre la peau",
+    title: "Tattoo Me — Où l'art rencontre la peau",
     description:
       "Découvrez des artistes tatoueurs d'exception, explorez leurs œuvres et trouvez l'inspiration pour votre prochain tatouage.",
-    images: [{ url: "/og-hero.jpg", width: 1200, height: 630 }],
+    images: [{ url: "/logo/logo.png", width: 136, height: 136 }],
   },
 };
 

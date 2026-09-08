@@ -22,7 +22,10 @@ const switzer = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
-  title: "Tattoo Pro",
+  title: {
+    default: "Tattoo Me",
+    template: "%s — Tattoo Me",
+  },
   description: "Trouvez votre tatoueur idéal",
 };
 

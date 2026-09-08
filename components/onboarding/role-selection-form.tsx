@@ -43,7 +43,7 @@ export function RoleSelectionForm({ userName }: { userName: string }) {
         </CardHeader>
         <CardContent className="space-y-4">
           <Typography tag="p" color="muted" align="center">
-            Comment souhaitez-vous utiliser Tattoo Pro ?
+            Comment souhaitez-vous utiliser Tattoo Me ?
           </Typography>
 
           <div className="grid grid-cols-2 gap-4">

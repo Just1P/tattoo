@@ -26,14 +26,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const name = artist.artistName ?? "Artiste";
   const description = artist.bio
     ? artist.bio.slice(0, 160)
-    : `Découvrez le portfolio de ${name} sur Tattoo Pro.`;
+    : `Découvrez le portfolio de ${name} sur Tattoo Me.`;
   const firstImage = artist.tattoos[0]?.imageUrl ?? null;
 
   return {
-    title: `${name} — Tattoo Pro`,
+    title: name,
     description,
     openGraph: {
-      title: `${name} — Tattoo Pro`,
+      title: `${name} — Tattoo Me`,
       description,
       ...(firstImage ? { images: [{ url: firstImage, width: 1200, height: 630 }] } : {}),
     },
