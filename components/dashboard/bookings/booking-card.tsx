@@ -17,13 +17,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getFreeTimeRangesForDate, isSlotAvailable } from "@/lib/availability";
 import { SIZE_LABELS, TATTOO_TYPE_LABELS } from "@/lib/constants";
-import { TIME_OPTIONS } from "@/lib/time-utils";
+import { TIME_OPTIONS, type DayOfWeek } from "@/lib/time-utils";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 type BookingStatus = "pending" | "confirmed" | "cancelled";
@@ -70,12 +71,25 @@ function combineDateAndTime(date: Date, time: string): Date {
   return new Date(`${yyyy}-${mm}-${dd}T${time}:00`);
 }
 
+type WeeklySlot = { day: DayOfWeek; startTime: string; endTime: string };
+type BlockedPeriod = { startDate: string; endDate: string };
+type ConfirmedBookingRange = { id: string; startAt: string; endAt: string };
+
 type Props = {
   booking: Booking;
   onStatusChange: (id: string, newStatus: BookingStatus) => void;
+  weeklySlots: WeeklySlot[];
+  blockedPeriods: BlockedPeriod[];
+  confirmedBookings: ConfirmedBookingRange[];
 };
 
-export function BookingCard({ booking, onStatusChange }: Props) {
+export function BookingCard({
+  booking,
+  onStatusChange,
+  weeklySlots,
+  blockedPeriods,
+  confirmedBookings,
+}: Props) {
   const [expanded, setExpanded] = useState(false);
   const [action, setAction] = useState<"confirm" | "cancel" | null>(null);
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -91,13 +105,87 @@ export function BookingCard({ booking, onStatusChange }: Props) {
     setNote("");
   }, [action]);
 
+  const blockedPeriodDates = useMemo(
+    () =>
+      blockedPeriods.map((p) => ({
+        startDate: new Date(p.startDate),
+        endDate: new Date(p.endDate),
+      })),
+    [blockedPeriods],
+  );
+  const confirmedBookingRanges = useMemo(
+    () =>
+      confirmedBookings.map((b) => ({
+        id: b.id,
+        startAt: new Date(b.startAt),
+        endAt: new Date(b.endAt),
+      })),
+    [confirmedBookings],
+  );
+
+  const freeRanges = useMemo(
+    () =>
+      date
+        ? getFreeTimeRangesForDate(date, weeklySlots, blockedPeriodDates, confirmedBookingRanges)
+        : [],
+    [date, weeklySlots, blockedPeriodDates, confirmedBookingRanges],
+  );
+
+  const startOptions = TIME_OPTIONS.filter((t) =>
+    freeRanges.some((r) => t >= r.startTime && t < r.endTime),
+  );
+  const endOptions = TIME_OPTIONS.filter((t) =>
+    freeRanges.some((r) => t > startTime && t <= r.endTime),
+  ).filter((t) => t > startTime);
+
+  useEffect(() => {
+    if (!date) return;
+    if (!startOptions.includes(startTime)) {
+      setStartTime(startOptions[0] ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date]);
+
+  useEffect(() => {
+    if (!date) return;
+    if (!endOptions.includes(endTime)) {
+      setEndTime(endOptions[0] ?? "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, startTime]);
+
+  function isDayDisabled(day: Date): boolean {
+    if (day < new Date(new Date().setHours(0, 0, 0, 0))) return true;
+    return (
+      getFreeTimeRangesForDate(day, weeklySlots, blockedPeriodDates, confirmedBookingRanges)
+        .length === 0
+    );
+  }
+
   async function handleConfirm() {
     if (!date) {
       toast.error("Choisissez une date");
       return;
     }
-    if (combineDateAndTime(date, startTime) >= combineDateAndTime(date, endTime)) {
+    if (!startTime || !endTime) {
+      toast.error("Aucun créneau disponible ce jour-là");
+      return;
+    }
+    const startAt = combineDateAndTime(date, startTime);
+    const endAt = combineDateAndTime(date, endTime);
+    if (startAt >= endAt) {
       toast.error("L'heure de fin doit être après l'heure de début");
+      return;
+    }
+    const availability = isSlotAvailable(
+      startAt,
+      endAt,
+      weeklySlots,
+      blockedPeriodDates,
+      confirmedBookingRanges,
+    );
+    if (!availability.ok) {
+      toast.error(availability.reason);
       return;
     }
     setLoading(true);
@@ -107,8 +195,8 @@ export function BookingCard({ booking, onStatusChange }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: "confirmed",
-          startAt: combineDateAndTime(date, startTime).toISOString(),
-          endAt: combineDateAndTime(date, endTime).toISOString(),
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
           artistNote: note.trim() || undefined,
         }),
       });
@@ -299,21 +387,27 @@ export function BookingCard({ booking, onStatusChange }: Props) {
                       selected={date}
                       onSelect={setDate}
                       locale={fr}
-                      disabled={{ before: new Date() }}
+                      disabled={isDayDisabled}
                     />
                   </PopoverContent>
                 </Popover>
               </div>
 
+              {date && freeRanges.length === 0 && (
+                <p className="text-sm text-destructive">
+                  Aucun créneau disponible ce jour-là.
+                </p>
+              )}
+
               <div className="flex flex-wrap gap-3">
                 <div className="space-y-1.5">
                   <Label>Début</Label>
-                  <Select value={startTime} onValueChange={setStartTime}>
+                  <Select value={startTime} onValueChange={setStartTime} disabled={!date}>
                     <SelectTrigger className="w-28">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {TIME_OPTIONS.map((t) => (
+                      {startOptions.map((t) => (
                         <SelectItem key={t} value={t}>
                           {t}
                         </SelectItem>
@@ -323,12 +417,12 @@ export function BookingCard({ booking, onStatusChange }: Props) {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Fin</Label>
-                  <Select value={endTime} onValueChange={setEndTime}>
+                  <Select value={endTime} onValueChange={setEndTime} disabled={!date}>
                     <SelectTrigger className="w-28">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {TIME_OPTIONS.filter((t) => t > startTime).map((t) => (
+                      {endOptions.map((t) => (
                         <SelectItem key={t} value={t}>
                           {t}
                         </SelectItem>

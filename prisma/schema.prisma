@@ -36,6 +36,8 @@ enum NotificationType {
   booking_request
   booking_confirmed
   booking_cancelled
+  booking_client_confirmed
+  booking_client_declined
   new_follower
 }
 
@@ -207,6 +209,11 @@ model Booking {
   referenceUrls String[]      @default([])
   // Message de refus ou contre-proposition
   artistNote    String?
+  // Le client doit accepter explicitement le créneau proposé par l'artiste :
+  // status="confirmed" && clientConfirmedAt=null signifie "en attente de sa
+  // réponse". clientNote porte sa raison optionnelle en cas de refus.
+  clientConfirmedAt DateTime?
+  clientNote        String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -220,6 +227,10 @@ model Booking {
   // aussi en base, ajouté par migration SQL brute : Prisma ne représente pas
   // les index partiels dans son DSL. Voir
   // prisma/migrations/20260902084328_booking_pending_unique_index/.
+  //
+  // Une contrainte EXCLUDE (btree_gist) empêche aussi deux réservations
+  // "confirmed" du même artiste de se chevaucher dans le temps. Voir
+  // prisma/migrations/20260908223955_booking_confirmed_no_overlap/.
 }
 
 // Créneau récurrent hebdomadaire (ex: lundi 10h-18h)

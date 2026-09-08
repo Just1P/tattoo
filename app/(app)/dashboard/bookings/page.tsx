@@ -17,19 +17,33 @@ export default async function DashboardBookingsPage() {
 
   if (!artist) redirect("/onboarding");
 
-  const bookings = await prisma.booking.findMany({
-    where: { artistId: artist.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: { select: { id: true, name: true, email: true } },
-    },
-  });
+  const [bookings, weeklySlots, blockedPeriods] = await Promise.all([
+    prisma.booking.findMany({
+      where: { artistId: artist.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    }),
+    prisma.weeklySlot.findMany({ where: { artistId: artist.id } }),
+    prisma.blockedPeriod.findMany({ where: { artistId: artist.id } }),
+  ]);
 
   const serialized = bookings.map((b) => ({
     ...b,
     startAt: b.startAt?.toISOString() ?? null,
     endAt: b.endAt?.toISOString() ?? null,
     createdAt: b.createdAt.toISOString(),
+  }));
+
+  const serializedWeeklySlots = weeklySlots.map((s) => ({
+    day: s.day,
+    startTime: s.startTime,
+    endTime: s.endTime,
+  }));
+  const serializedBlockedPeriods = blockedPeriods.map((p) => ({
+    startDate: p.startDate.toISOString(),
+    endDate: p.endDate.toISOString(),
   }));
 
   const pendingCount = bookings.filter((b) => b.status === "pending").length;
@@ -45,7 +59,11 @@ export default async function DashboardBookingsPage() {
         </Typography>
       </div>
 
-      <BookingList initialBookings={serialized} />
+      <BookingList
+        initialBookings={serialized}
+        weeklySlots={serializedWeeklySlots}
+        blockedPeriods={serializedBlockedPeriods}
+      />
     </div>
   );
 }

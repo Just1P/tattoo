@@ -39,6 +39,10 @@ function notificationLabel(n: Notification): string {
       return `Réservation confirmée par ${str(p.artistName, "l'artiste")}`;
     case "booking_cancelled":
       return `Réservation annulée par ${str(p.artistName, "l'artiste")}`;
+    case "booking_client_confirmed":
+      return `${str(p.clientName, "Le client")} a confirmé le créneau proposé`;
+    case "booking_client_declined":
+      return `${str(p.clientName, "Le client")} a refusé le créneau proposé`;
     case "new_follower":
       return `${str(p.followerName, "Quelqu'un")} vous suit maintenant`;
     default:
@@ -53,6 +57,9 @@ function notificationHref(n: Notification): string {
     case "booking_confirmed":
     case "booking_cancelled":
       return "/bookings";
+    case "booking_client_confirmed":
+    case "booking_client_declined":
+      return "/dashboard/bookings";
     case "new_follower":
       return "/dashboard";
     default:

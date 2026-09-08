@@ -1,9 +1,13 @@
 "use client";
 
 import { BookingCard } from "./booking-card";
+import type { DayOfWeek } from "@/lib/time-utils";
 import { useState } from "react";
 
 type BookingStatus = "pending" | "confirmed" | "cancelled";
+
+type WeeklySlot = { day: DayOfWeek; startTime: string; endTime: string };
+type BlockedPeriod = { startDate: string; endDate: string };
 
 type Booking = {
   id: string;
@@ -35,11 +39,21 @@ const FILTER_LABELS: Record<Filter, string> = {
 
 type Props = {
   initialBookings: Booking[];
+  weeklySlots: WeeklySlot[];
+  blockedPeriods: BlockedPeriod[];
 };
 
-export function BookingList({ initialBookings }: Props) {
+export function BookingList({ initialBookings, weeklySlots, blockedPeriods }: Props) {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [filter, setFilter] = useState<Filter>("pending");
+
+  // Figé au montage (via l'initialiseur paresseux de useState) : sert juste
+  // à ignorer l'historique déjà passé dans le calcul de conflit de créneaux.
+  const [now] = useState(() => Date.now());
+  const confirmedBookings = bookings
+    .filter((b) => b.status === "confirmed" && b.startAt && b.endAt)
+    .filter((b) => new Date(b.endAt!).getTime() >= now)
+    .map((b) => ({ id: b.id, startAt: b.startAt!, endAt: b.endAt! }));
 
   function handleStatusChange(id: string, newStatus: BookingStatus) {
     setBookings((prev) =>
@@ -91,6 +105,9 @@ export function BookingList({ initialBookings }: Props) {
               key={booking.id}
               booking={booking}
               onStatusChange={handleStatusChange}
+              weeklySlots={weeklySlots}
+              blockedPeriods={blockedPeriods}
+              confirmedBookings={confirmedBookings}
             />
           ))}
         </div>

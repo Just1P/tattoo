@@ -1,5 +1,5 @@
+import { BookingResponseActions } from "@/components/bookings/booking-response-actions";
 import Typography from "@/components/custom/Typography";
-import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/auth";
 import { SIZE_LABELS, TATTOO_TYPE_LABELS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
@@ -36,7 +36,6 @@ export default async function ClientBookingsPage() {
           id: true,
           artistName: true,
           city: true,
-          user: { select: { image: true } },
         },
       },
     },
@@ -76,9 +75,15 @@ export default async function ClientBookingsPage() {
                   )}
                 </div>
                 <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0 ${STATUS_STYLES[booking.status]}`}
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0 ${
+                    booking.status === "confirmed" && !booking.clientConfirmedAt
+                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                      : STATUS_STYLES[booking.status]
+                  }`}
                 >
-                  {STATUS_LABELS[booking.status]}
+                  {booking.status === "confirmed" && !booking.clientConfirmedAt
+                    ? "Créneau proposé — à confirmer"
+                    : STATUS_LABELS[booking.status]}
                 </span>
               </div>
 
@@ -123,6 +128,10 @@ export default async function ClientBookingsPage() {
                   <span className="text-muted-foreground">Message de l&apos;artiste : </span>
                   {booking.artistNote}
                 </div>
+              )}
+
+              {booking.status === "confirmed" && !booking.clientConfirmedAt && (
+                <BookingResponseActions bookingId={booking.id} />
               )}
 
               <p className="text-xs text-muted-foreground">
