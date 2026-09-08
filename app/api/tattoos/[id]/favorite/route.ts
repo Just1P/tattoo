@@ -14,6 +14,20 @@ export async function POST(_req: Request, { params }: { params: Params }) {
 
   const { id: tattooId } = await params;
 
+  const tattoo = await prisma.tattoo.findUnique({
+    where: { id: tattooId },
+    select: { artist: { select: { userId: true } } },
+  });
+  if (!tattoo) {
+    return NextResponse.json({ error: "Tatouage introuvable" }, { status: 404 });
+  }
+  if (tattoo.artist.userId === session.user.id) {
+    return NextResponse.json(
+      { error: "Vous ne pouvez pas aimer votre propre publication" },
+      { status: 403 },
+    );
+  }
+
   try {
     await prisma.favoriteTattoo.create({
       data: { tattooId, userId: session.user.id },

@@ -29,7 +29,7 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
 
   const session = await auth.api.getSession({ headers: await headers() });
 
-  const [{ tattoos, totalPages, currentPage, favoritedTattooIds }, styles] =
+  const [{ tattoos, totalPages, currentPage, favoritedTattooIds, ownTattooIds }, styles] =
     await Promise.all([
       getPublicTattoos({
         styleSlug: styleSlug || undefined,
@@ -73,6 +73,7 @@ export default async function FeedPage({ searchParams }: { searchParams: SearchP
               style={tattoo.style}
               artist={tattoo.artist}
               isFavorited={favoritedTattooIds.has(tattoo.id)}
+              isOwn={ownTattooIds.has(tattoo.id)}
               priority={index < 4}
             />
           ))}

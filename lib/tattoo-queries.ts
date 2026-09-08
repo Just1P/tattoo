@@ -22,7 +22,7 @@ export async function getPublicTattoos(filters: TattooFeedFilters = {}) {
       where,
       include: {
         style: { select: { name: true, slug: true } },
-        artist: { select: { id: true, artistName: true, city: true } },
+        artist: { select: { id: true, userId: true, artistName: true, city: true } },
         ...(userId
           ? { favoritedBy: { where: { userId }, select: { id: true } } }
           : {}),
@@ -38,11 +38,16 @@ export async function getPublicTattoos(filters: TattooFeedFilters = {}) {
     ? new Set(tattoos.filter((t) => t.favoritedBy?.length > 0).map((t) => t.id))
     : new Set<string>();
 
+  const ownTattooIds = userId
+    ? new Set(tattoos.filter((t) => t.artist.userId === userId).map((t) => t.id))
+    : new Set<string>();
+
   return {
     tattoos,
     totalCount,
     totalPages: Math.max(1, Math.ceil(totalCount / PAGE_SIZE)),
     currentPage: page,
     favoritedTattooIds,
+    ownTattooIds,
   };
 }

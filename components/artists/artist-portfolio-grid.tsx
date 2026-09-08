@@ -13,9 +13,11 @@ type Tattoo = {
 export function ArtistPortfolioGrid({
   tattoos,
   favoritedTattooIds,
+  isOwnProfile = false,
 }: {
   tattoos: Tattoo[];
   favoritedTattooIds?: string[];
+  isOwnProfile?: boolean;
 }) {
   if (tattoos.length === 0) {
     return (
@@ -44,7 +46,7 @@ export function ArtistPortfolioGrid({
             priority={index < 4}
             loading={index < 4 ? undefined : "lazy"}
           />
-          {favoritedSet !== undefined && (
+          {favoritedSet !== undefined && !isOwnProfile && (
             <div className="absolute right-2 top-2 z-10">
               <FavoriteTattooButton
                 tattooId={tattoo.id}

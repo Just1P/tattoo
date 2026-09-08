@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -49,6 +50,9 @@ export function ImageCropDialog({ open, imageSrc, fileName, onCancel, onConfirm 
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Recadrer l&apos;image</DialogTitle>
+          <DialogDescription>
+            Ajustez le zoom et la position, puis validez pour appliquer le cadrage carré.
+          </DialogDescription>
         </DialogHeader>
 
         {imageSrc && (

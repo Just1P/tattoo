@@ -27,7 +27,7 @@ export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   const role = (session?.user as { role?: string } | undefined)?.role;
 
-  const [{ tattoos, favoritedTattooIds }, { artists }] = await Promise.all([
+  const [{ tattoos, favoritedTattooIds, ownTattooIds }, { artists }] = await Promise.all([
     getPublicTattoos({ page: 1, userId: session?.user.id }),
     getFilteredArtists({}),
   ]);
@@ -101,6 +101,7 @@ export default async function HomePage() {
                 style={tattoo.style}
                 artist={tattoo.artist}
                 isFavorited={favoritedTattooIds.has(tattoo.id)}
+                isOwn={ownTattooIds.has(tattoo.id)}
                 priority={index < 4}
               />
             ))}

@@ -12,10 +12,11 @@ type Props = {
   style: { name: string };
   artist: { id: string; artistName: string | null; city: string | null };
   isFavorited: boolean;
+  isOwn?: boolean;
   priority?: boolean;
 };
 
-export function TattooFeedCard({ id, imageUrl, title, style, artist, isFavorited, priority = false }: Props) {
+export function TattooFeedCard({ id, imageUrl, title, style, artist, isFavorited, isOwn = false, priority = false }: Props) {
   return (
     <div className="group relative aspect-square overflow-hidden rounded-md bg-muted">
       <Image
@@ -29,9 +30,11 @@ export function TattooFeedCard({ id, imageUrl, title, style, artist, isFavorited
         loading={priority ? undefined : "lazy"}
       />
 
-      <div className="absolute right-2 top-2 z-10">
-        <FavoriteTattooButton tattooId={id} initialIsFavorited={isFavorited} />
-      </div>
+      {!isOwn && (
+        <div className="absolute right-2 top-2 z-10">
+          <FavoriteTattooButton tattooId={id} initialIsFavorited={isFavorited} />
+        </div>
+      )}
 
       <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/70 to-transparent p-3 opacity-100 transition-opacity duration-300 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
         {title && (

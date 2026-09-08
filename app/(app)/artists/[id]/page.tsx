@@ -97,7 +97,11 @@ export default async function ArtistPublicPage({ params }: Props) {
 
       <section className="space-y-6 px-8 py-12">
         <Typography tag="h2">Portfolio</Typography>
-        <ArtistPortfolioGrid tattoos={artist.tattoos} favoritedTattooIds={favoritedTattooIds} />
+        <ArtistPortfolioGrid
+          tattoos={artist.tattoos}
+          favoritedTattooIds={favoritedTattooIds}
+          isOwnProfile={session?.user.id === artist.userId}
+        />
       </section>
     </main>
   );
