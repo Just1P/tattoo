@@ -1,16 +1,16 @@
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { lastLoginMethod } from "better-auth/plugins";
-import { headers } from "next/headers";
-import { prisma } from "./prisma";
+import { betterAuth } from 'better-auth';
+import { prismaAdapter } from 'better-auth/adapters/prisma';
+import { lastLoginMethod } from 'better-auth/plugins';
+import { headers } from 'next/headers';
+import { prisma } from './prisma';
 
-export type UserRole = "client" | "artist" | "admin";
+export type UserRole = 'client' | 'artist' | 'admin';
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
   database: prismaAdapter(prisma, {
-    provider: "postgresql",
+    provider: 'postgresql',
   }),
   emailAndPassword: {
     enabled: true,
@@ -24,9 +24,9 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
-        type: "string",
+        type: 'string',
         required: false,
-        defaultValue: "client",
+        defaultValue: 'client',
         // Jamais accepté tel quel depuis la requête client : voir
         // databaseHooks.user.create.before, qui revalide et filtre la
         // valeur contre une liste blanche avant création. Sans ce
@@ -42,21 +42,18 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user, context) => {
-          const requestedRole = (context?.body as { role?: unknown } | undefined)
-            ?.role;
-          const ALLOWED_SIGNUP_ROLES = ["client", "artist"] as const;
+          const requestedRole = (context?.body as { role?: unknown } | undefined)?.role;
+          const ALLOWED_SIGNUP_ROLES = ['client', 'artist'] as const;
           const role = ALLOWED_SIGNUP_ROLES.includes(
             requestedRole as (typeof ALLOWED_SIGNUP_ROLES)[number],
           )
-            ? (requestedRole as "client" | "artist")
-            : "client";
+            ? (requestedRole as 'client' | 'artist')
+            : 'client';
 
           return { data: { ...user, role } };
         },
         after: async (user) => {
           const typedUser = user as { role?: UserRole; passwordHash?: string | null };
-
-          // Les comptes créés via email ont un passwordHash : le rôle a été choisi explicitement
           if (typedUser.passwordHash) {
             await prisma.user.update({
               where: { id: user.id },
@@ -64,7 +61,7 @@ export const auth = betterAuth({
             });
           }
 
-          if (typedUser.role !== "artist") return;
+          if (typedUser.role !== 'artist') return;
           await prisma.tattooArtist.upsert({
             where: { userId: user.id },
             update: {},
@@ -76,9 +73,11 @@ export const auth = betterAuth({
   },
 });
 
-type SessionWithRole = Awaited<ReturnType<typeof auth.api.getSession>> & {
-  user: { role: UserRole };
-} | null;
+type SessionWithRole =
+  | (Awaited<ReturnType<typeof auth.api.getSession>> & {
+      user: { role: UserRole };
+    })
+  | null;
 
 export async function getSession(): Promise<SessionWithRole> {
   const session = await auth.api.getSession({ headers: await headers() });

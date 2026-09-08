@@ -1,6 +1,11 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendClient: Resend | null = null;
+function getResend() {
+  if (!resendClient) resendClient = new Resend(process.env.RESEND_API_KEY);
+  return resendClient;
+}
+
 const FROM =
   process.env.EMAIL_FROM ?? "Tattoo Pro <onboarding@resend.dev>";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -42,7 +47,7 @@ export async function sendNewMessageEmail({
   const link = `${BASE_URL}/messages/${conversationId}`;
   const safeSender = esc(senderName);
   const safePreview = esc(preview.slice(0, 200)) + (preview.length > 200 ? "…" : "");
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: `Nouveau message de ${safeSender}`,
@@ -79,7 +84,7 @@ export async function sendNewBookingEmail({
     grand: "Grand",
     tres_grand: "Très grand",
   };
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: `Nouvelle demande de ${esc(clientName)}`,
@@ -120,7 +125,7 @@ export async function sendBookingConfirmedEmail({
     hour: "2-digit",
     minute: "2-digit",
   });
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: `Votre réservation est confirmée 🎉`,
@@ -149,7 +154,7 @@ export async function sendBookingCancelledEmail({
   artistNote?: string | null;
 }) {
   const link = `${BASE_URL}/artists`;
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: `Votre demande n'a pas été retenue`,
@@ -176,7 +181,7 @@ export async function sendProfileApprovedEmail({
   artistId: string;
 }) {
   const link = `${BASE_URL}/artists/${artistId}`;
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: `Votre profil est approuvé 🎉`,
@@ -201,7 +206,7 @@ export async function sendProfileRejectedEmail({
   verificationNote?: string | null;
 }) {
   const link = `${BASE_URL}/dashboard`;
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: `Votre profil nécessite des modifications`,
