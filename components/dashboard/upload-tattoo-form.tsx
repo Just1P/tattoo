@@ -2,6 +2,7 @@
 
 import { FormField } from "@/components/form/form-field";
 import { StyleSelector } from "@/components/form/style-selector";
+import { ImageCropDialog } from "@/components/dashboard/image-crop-dialog";
 import Typography from "@/components/custom/Typography";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,65 +23,12 @@ type Props = {
   styles: Style[];
 };
 
-const MAX_DIMENSION = 2400;
-const WEBP_QUALITY = 0.92;
-
-async function compressImage(file: File): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-
-      let { width, height } = img;
-      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-        const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        reject(new Error("Canvas context unavailable"));
-        return;
-      }
-
-      ctx.drawImage(img, 0, 0, width, height);
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error("Canvas toBlob failed"));
-            return;
-          }
-          const compressed = new File(
-            [blob],
-            file.name.replace(/\.[^.]+$/, ".webp"),
-            { type: "image/webp" },
-          );
-          resolve(compressed);
-        },
-        "image/webp",
-        WEBP_QUALITY,
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("Image load failed"));
-    };
-
-    img.src = objectUrl;
-  });
-}
-
 export function UploadTattooForm({ styles }: Props) {
   const router = useRouter();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [pendingFileName, setPendingFileName] = useState("image.webp");
   const [styleId, setStyleId] = useState<string>("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -93,6 +41,8 @@ export function UploadTattooForm({ styles }: Props) {
     onUploadBegin: () => setIsUploading(true),
     onClientUploadComplete: (res) => {
       setIsUploading(false);
+      if (localPreview) URL.revokeObjectURL(localPreview);
+      setLocalPreview(null);
       if (res[0]) {
         setImageUrl(res[0].ufsUrl);
         setErrors((prev) => ({ ...prev, imageUrl: "" }));
@@ -101,20 +51,31 @@ export function UploadTattooForm({ styles }: Props) {
     },
     onUploadError: (error) => {
       setIsUploading(false);
+      if (localPreview) URL.revokeObjectURL(localPreview);
+      setLocalPreview(null);
       toast.error(error.message || "Erreur lors de l'upload. Veuillez réessayer.");
     },
   });
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const input = e.currentTarget;
     const file = input.files?.[0];
+    input.value = "";
     if (!file) return;
-    try {
-      const compressed = await compressImage(file);
-      await startUpload([compressed]);
-    } finally {
-      input.value = "";
-    }
+    setPendingFileName(file.name);
+    setCropSrc(URL.createObjectURL(file));
+  }
+
+  function handleCropCancel() {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+  }
+
+  async function handleCropConfirm(file: File) {
+    if (cropSrc) URL.revokeObjectURL(cropSrc);
+    setCropSrc(null);
+    setLocalPreview(URL.createObjectURL(file));
+    await startUpload([file]);
   }
 
   function validate(): boolean {
@@ -153,13 +114,13 @@ export function UploadTattooForm({ styles }: Props) {
         <div className="space-y-2">
           {imageUrl ? (
             <div className="space-y-3">
-              <div className="relative h-64 w-full overflow-hidden rounded-lg">
+              <div className="relative aspect-square w-full max-w-sm overflow-hidden rounded-lg">
                 <Image
                   src={imageUrl}
                   alt="Aperçu de l'œuvre"
                   fill
                   className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 640px"
+                  sizes="(max-width: 768px) 100vw, 384px"
                 />
               </div>
               <Button
@@ -171,26 +132,35 @@ export function UploadTattooForm({ styles }: Props) {
                 Changer l&apos;image
               </Button>
             </div>
+          ) : localPreview ? (
+            <div className="relative aspect-square w-full max-w-sm overflow-hidden rounded-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={localPreview}
+                alt="Aperçu de l'œuvre recadrée"
+                className="size-full object-cover"
+              />
+              {isUploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <Typography tag="p" className="text-white">
+                    Envoi en cours...
+                  </Typography>
+                </div>
+              )}
+            </div>
           ) : (
             <div className="space-y-2">
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                disabled={isUploading}
-                className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/40 px-6 py-10 text-muted-foreground transition-smooth transition-colors hover:border-primary hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-muted/40 px-6 py-10 text-muted-foreground transition-smooth transition-colors hover:border-primary hover:bg-muted"
               >
-                {isUploading ? (
-                  <Typography tag="p">Envoi en cours...</Typography>
-                ) : (
-                  <>
-                    <Typography tag="p" weight="medium">
-                      Cliquez pour choisir une image
-                    </Typography>
-                    <Typography tag="p" color="muted">
-                      JPG, PNG, WEBP — max 8 Mo
-                    </Typography>
-                  </>
-                )}
+                <Typography tag="p" weight="medium">
+                  Cliquez pour choisir une image
+                </Typography>
+                <Typography tag="p" color="muted">
+                  JPG, PNG, WEBP — max 8 Mo
+                </Typography>
               </button>
               <input
                 ref={inputRef}
@@ -201,6 +171,13 @@ export function UploadTattooForm({ styles }: Props) {
               />
             </div>
           )}
+          <ImageCropDialog
+            open={!!cropSrc}
+            imageSrc={cropSrc}
+            fileName={pendingFileName}
+            onCancel={handleCropCancel}
+            onConfirm={handleCropConfirm}
+          />
           {errors.imageUrl && (
             <Typography tag="p" color="destructive">
               {errors.imageUrl}
