@@ -31,6 +31,14 @@ export async function PATCH(req: Request) {
 
   const { role } = parsed.data;
 
+  const existing = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { roleSelected: true },
+  });
+  if (existing?.roleSelected) {
+    return NextResponse.json({ error: "Rôle déjà défini" }, { status: 409 });
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: session.user.id },
