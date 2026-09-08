@@ -4,7 +4,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://utfs.io https://*.ufs.sh https://lh3.googleusercontent.com",
   "font-src 'self'",
-  "connect-src 'self' https://utfs.io https://*.ufs.sh",
+  "connect-src 'self' https://utfs.io https://*.ufs.sh https://*.ingest.uploadthing.com",
   "media-src 'self'",
   "frame-ancestors 'none'",
 ].join("; ");

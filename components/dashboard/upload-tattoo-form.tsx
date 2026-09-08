@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import type { OurFileRouter } from "@/lib/uploadthing";
 import { generateReactHelpers } from "@uploadthing/react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -152,11 +153,14 @@ export function UploadTattooForm({ styles }: Props) {
         <div className="space-y-2">
           {imageUrl ? (
             <div className="space-y-3">
-              <img
-                src={imageUrl}
-                alt="Aperçu de l'œuvre"
-                className="h-64 w-full rounded-lg object-cover"
-              />
+              <div className="relative h-64 w-full overflow-hidden rounded-lg">
+                <Image
+                  src={imageUrl}
+                  alt="Aperçu de l'œuvre"
+                  fill
+                  className="object-cover"
+                />
+              </div>
               <Button
                 type="button"
                 variant="outline"
