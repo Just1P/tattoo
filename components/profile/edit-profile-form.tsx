@@ -65,7 +65,12 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { startUpload, isUploading } = useUploadThing("avatarImage");
+  const uploadErrorRef = useRef<string | null>(null);
+  const { startUpload, isUploading } = useUploadThing("avatarImage", {
+    onUploadError: (error) => {
+      uploadErrorRef.current = error.message;
+    },
+  });
 
   useEffect(() => {
     return () => {
@@ -123,9 +128,10 @@ export function EditProfileForm({ initialUser, initialArtist, styles = [] }: Pro
 
     let avatarUrl: string | undefined;
     if (pendingAvatarFile) {
+      uploadErrorRef.current = null;
       const uploaded = await startUpload([pendingAvatarFile]);
       if (!uploaded?.[0]) {
-        toast.error("Erreur lors de l'upload de l'avatar.");
+        toast.error(uploadErrorRef.current || "Erreur lors de l'upload de l'avatar.");
         setIsSubmitting(false);
         return;
       }

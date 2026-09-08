@@ -1,7 +1,9 @@
 import { getSession } from "@/lib/auth";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 
-const f = createUploadthing();
+const f = createUploadthing({
+  errorFormatter: (err) => ({ message: err.message }),
+});
 
 export const ourFileRouter = {
   messageImage: f({

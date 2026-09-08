@@ -208,8 +208,8 @@ export function MessageThread({
       } finally {
       }
     },
-    onUploadError: () => {
-      toast.error("Erreur lors de l'upload de l'image");
+    onUploadError: (error) => {
+      toast.error(error.message || "Erreur lors de l'upload de l'image");
       if (localPreviewUrlRef.current) {
         URL.revokeObjectURL(localPreviewUrlRef.current);
         localPreviewUrlRef.current = null;
@@ -386,6 +386,7 @@ export function MessageThread({
                         alt=""
                         aria-hidden
                         fill
+                        sizes="260px"
                         className="object-cover opacity-0 pointer-events-none"
                         onLoad={() => {
                           if (localPreviewUrlRef.current === msg.localPreview) {

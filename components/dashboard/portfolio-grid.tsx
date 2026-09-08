@@ -61,12 +61,14 @@ function SortableTattooCard({
   onDelete,
   onTogglePin,
   onEdit,
+  priority,
 }: {
   tattoo: Tattoo;
   styles: Style[];
   onDelete: (id: string) => void | Promise<void>;
   onTogglePin: (id: string, pinned: boolean) => void | Promise<void>;
   onEdit: (id: string, data: EditState) => void | Promise<void>;
+  priority?: boolean;
 }) {
   const {
     attributes,
@@ -129,7 +131,8 @@ function SortableTattooCard({
           className="object-cover"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           quality={85}
-          loading="lazy"
+          priority={priority}
+          loading={priority ? undefined : "lazy"}
         />
       </div>
 
@@ -366,7 +369,7 @@ export function PortfolioGrid({
         strategy={rectSortingStrategy}
       >
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {tattoos.map((tattoo) => (
+          {tattoos.map((tattoo, index) => (
             <SortableTattooCard
               key={tattoo.id}
               tattoo={tattoo}
@@ -374,6 +377,7 @@ export function PortfolioGrid({
               onDelete={handleDelete}
               onTogglePin={handleTogglePin}
               onEdit={handleEdit}
+              priority={index < 4}
             />
           ))}
         </div>

@@ -99,9 +99,9 @@ export function UploadTattooForm({ styles }: Props) {
         toast.success("Image uploadée !");
       }
     },
-    onUploadError: () => {
+    onUploadError: (error) => {
       setIsUploading(false);
-      toast.error("Erreur lors de l'upload. Veuillez réessayer.");
+      toast.error(error.message || "Erreur lors de l'upload. Veuillez réessayer.");
     },
   });
 
@@ -159,6 +159,7 @@ export function UploadTattooForm({ styles }: Props) {
                   alt="Aperçu de l'œuvre"
                   fill
                   className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 640px"
                 />
               </div>
               <Button
