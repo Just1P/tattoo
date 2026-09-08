@@ -54,8 +54,6 @@ export const auth = betterAuth({
         },
         after: async (user) => {
           const typedUser = user as { role?: UserRole; passwordHash?: string | null };
-
-          // Les comptes créés via email ont un passwordHash : le rôle a été choisi explicitement
           if (typedUser.passwordHash) {
             await prisma.user.update({
               where: { id: user.id },
