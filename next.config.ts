@@ -2,6 +2,16 @@ import { securityHeaders } from "@/lib/security-headers";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.tattoo-me.xyz" }],
+        destination: "https://tattoo-me.xyz/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
