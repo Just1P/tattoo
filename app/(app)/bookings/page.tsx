@@ -1,24 +1,13 @@
 import { BookingResponseActions } from "@/components/bookings/booking-response-actions";
 import Typography from "@/components/custom/Typography";
 import { auth } from "@/lib/auth";
+import { BOOKING_STATUS_LABELS, BOOKING_STATUS_STYLES, getBookingDisplayStatus } from "@/lib/booking-status";
 import { SIZE_LABELS, TATTOO_TYPE_LABELS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-
-const STATUS_LABELS = {
-  pending: "En attente",
-  confirmed: "Confirmé",
-  cancelled: "Annulé",
-};
-
-const STATUS_STYLES = {
-  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  confirmed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-};
 
 
 export default async function ClientBookingsPage() {
@@ -75,15 +64,9 @@ export default async function ClientBookingsPage() {
                   )}
                 </div>
                 <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0 ${
-                    booking.status === "confirmed" && !booking.clientConfirmedAt
-                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                      : STATUS_STYLES[booking.status]
-                  }`}
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0 ${BOOKING_STATUS_STYLES[getBookingDisplayStatus(booking.status, booking.clientConfirmedAt)]}`}
                 >
-                  {booking.status === "confirmed" && !booking.clientConfirmedAt
-                    ? "Créneau proposé — à confirmer"
-                    : STATUS_LABELS[booking.status]}
+                  {BOOKING_STATUS_LABELS[getBookingDisplayStatus(booking.status, booking.clientConfirmedAt)]}
                 </span>
               </div>
 

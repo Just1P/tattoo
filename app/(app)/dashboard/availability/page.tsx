@@ -1,5 +1,5 @@
 import { BlockedPeriods } from "@/components/dashboard/availability/blocked-periods";
-import { WeeklySchedule } from "@/components/dashboard/availability/weekly-schedule";
+import { WeeklyTimeline } from "@/components/dashboard/availability/weekly-timeline";
 import Typography from "@/components/custom/Typography";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -45,7 +45,7 @@ export default async function DashboardAvailabilityPage() {
             Les créneaux durant lesquels vous êtes disponible chaque semaine
           </Typography>
         </div>
-        <WeeklySchedule initialSlots={weeklySlots} />
+        <WeeklyTimeline initialSlots={weeklySlots} />
       </section>
 
       <section className="space-y-4">

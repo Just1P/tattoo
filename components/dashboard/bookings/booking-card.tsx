@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { getFreeTimeRangesForDate, isSlotAvailable } from "@/lib/availability";
+import { BOOKING_STATUS_LABELS, BOOKING_STATUS_STYLES } from "@/lib/booking-status";
 import { SIZE_LABELS, TATTOO_TYPE_LABELS } from "@/lib/constants";
 import { TIME_OPTIONS, type DayOfWeek } from "@/lib/time-utils";
 import { cn } from "@/lib/utils";
@@ -48,20 +48,6 @@ type Booking = {
   };
 };
 
-
-const STATUS_STYLES: Record<BookingStatus, string> = {
-  pending:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  confirmed:
-    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-};
-
-const STATUS_LABELS: Record<BookingStatus, string> = {
-  pending: "En attente",
-  confirmed: "Confirmé",
-  cancelled: "Annulé",
-};
 
 
 function combineDateAndTime(date: Date, time: string): Date {
@@ -266,10 +252,10 @@ export function BookingCard({
           <span
             className={cn(
               "rounded-full px-2.5 py-0.5 text-xs font-medium",
-              STATUS_STYLES[booking.status],
+              BOOKING_STATUS_STYLES[booking.status],
             )}
           >
-            {STATUS_LABELS[booking.status]}
+            {BOOKING_STATUS_LABELS[booking.status]}
           </span>
           <span className="text-xs text-muted-foreground">
             {format(new Date(booking.createdAt), "d MMM yyyy", { locale: fr })}
