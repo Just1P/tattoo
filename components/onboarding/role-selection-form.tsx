@@ -3,6 +3,7 @@
 import Typography from "@/components/custom/Typography";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { IconPalette, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -53,7 +54,7 @@ export function RoleSelectionForm({ userName }: { userName: string }) {
               disabled={isSubmitting}
               onClick={() => selectRole("client")}
             >
-              <span className="text-2xl">🔍</span>
+              <IconSearch className="size-8" />
               <Typography tag="span" weight="medium">
                 Client
               </Typography>
@@ -68,7 +69,7 @@ export function RoleSelectionForm({ userName }: { userName: string }) {
               disabled={isSubmitting}
               onClick={() => selectRole("artist")}
             >
-              <span className="text-2xl">🎨</span>
+              <IconPalette className="size-8" />
               <Typography tag="span" weight="medium">
                 Tatoueur
               </Typography>

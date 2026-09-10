@@ -48,7 +48,7 @@ export default async function ArtistsPage({ searchParams }: { searchParams: Sear
   ]);
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 px-4 py-10">
+    <main className="mx-auto max-w-6xl space-y-8 px-4 py-10">
       <div className="space-y-1">
         <Typography tag="h1">Nos tatoueurs</Typography>
         <Typography tag="p" color="muted">

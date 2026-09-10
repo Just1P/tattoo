@@ -111,7 +111,7 @@ export default async function HomePage() {
 
       {/* Artistes récents */}
       {previewArtists.length > 0 && (
-        <section className="mx-auto max-w-5xl space-y-6">
+        <section className="mx-auto max-w-6xl space-y-6">
           <div className="flex items-center justify-between">
             <Typography tag="h2">Artistes à découvrir</Typography>
             <Link href="/artists">

@@ -12,7 +12,7 @@ export default async function FollowingPage() {
   const artists = await getFollowedArtists(session.user.id);
 
   return (
-    <main className="mx-auto max-w-5xl space-y-8 px-4 py-10">
+    <main className="mx-auto max-w-6xl space-y-8 px-4 py-10">
       <Typography tag="h1">Artistes suivis</Typography>
 
       {artists.length === 0 ? (

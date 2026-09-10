@@ -118,8 +118,8 @@ export function ConversationList({ conversations, currentUserId }: Props) {
                   <p className={cn("text-xs truncate mt-0.5", conv.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground")}>
                     {conv.lastMessage
                       ? conv.lastMessage.senderId === currentUserId
-                        ? `Vous : ${conv.lastMessage.content ?? "📷 Image"}`
-                        : (conv.lastMessage.content ?? "📷 Image")
+                        ? `Vous : ${conv.lastMessage.content ?? "Image"}`
+                        : (conv.lastMessage.content ?? "Image")
                       : "Démarrer la conversation"}
                   </p>
                 </div>

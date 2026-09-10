@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -31,7 +30,6 @@ const registerSchema = z
       .string()
       .min(8, "Le mot de passe doit contenir au moins 8 caractères."),
     confirmPassword: z.string(),
-    role: z.enum(["client", "artist"]),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Les mots de passe ne correspondent pas.",
@@ -43,12 +41,10 @@ type RegisterValues = z.infer<typeof registerSchema>;
 export function RegisterForm() {
   const router = useRouter();
   const lastMethod = useLastLoginMethod();
-  const [role, setRole] = useState<"client" | "artist">("client");
 
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
@@ -57,27 +53,15 @@ export function RegisterForm() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "client",
     },
   });
 
-  function toggleRole(value: "client" | "artist") {
-    setRole(value);
-    setValue("role", value);
-  }
-
   async function onSubmit(values: RegisterValues) {
-    // `role` a input: false côté serveur (voir lib/auth.ts) pour empêcher
-    // qu'un appel direct à l'API impose un rôle arbitraire (ex: "admin").
-    // Le cast est nécessaire car le typage officiel du SDK exclut ce champ
-    // par design ; le serveur revalide et filtre la valeur indépendamment
-    // dans databaseHooks.user.create.before (liste blanche client/artist).
     const { error } = await signUp.email({
       name: values.name,
       email: values.email,
       password: values.password,
-      role: values.role,
-    } as Parameters<typeof signUp.email>[0] & { role: string });
+    });
 
     if (error) {
       toast.error(getAuthErrorMessage(error.code ?? ""));
@@ -85,7 +69,7 @@ export function RegisterForm() {
     }
 
     toast.success("Compte créé avec succès !");
-    router.push(values.role === "artist" ? "/onboarding" : "/");
+    router.push("/role-selection");
   }
 
   return (
@@ -97,25 +81,6 @@ export function RegisterForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="flex gap-1 rounded-lg">
-            <Button
-              type="button"
-              variant={role === "client" ? "default" : "ghost"}
-              className="flex-1"
-              onClick={() => toggleRole("client")}
-            >
-              Client
-            </Button>
-            <Button
-              type="button"
-              variant={role === "artist" ? "default" : "ghost"}
-              className="flex-1"
-              onClick={() => toggleRole("artist")}
-            >
-              Tatoueur
-            </Button>
-          </div>
-
           <div className="space-y-1">
             <label htmlFor="name">
               <Typography tag="p" weight="medium">

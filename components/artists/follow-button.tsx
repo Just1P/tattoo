@@ -3,6 +3,7 @@
 import { AuthRequiredModal } from "@/components/auth/auth-required-modal";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
+import { IconCheck } from "@tabler/icons-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -53,7 +54,14 @@ export function FollowButton({ artistId, initialIsFollowed }: Props) {
         onClick={handleToggle}
         disabled={isPending || loading}
       >
-        {isFollowed ? "Suivi ✓" : "Suivre"}
+        {isFollowed ? (
+          <>
+            <IconCheck className="size-4" />
+            Suivi
+          </>
+        ) : (
+          "Suivre"
+        )}
       </Button>
 
       <AuthRequiredModal

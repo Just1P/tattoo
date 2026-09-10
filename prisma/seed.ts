@@ -1,14 +1,22 @@
 import "dotenv/config";
+import { extname, join } from "node:path";
+import { readFileSync, readdirSync } from "node:fs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { UTApi } from "uploadthing/server";
 
 const DEMO_PASSWORD = "Demo1234!";
 
-/** Rectangle coloré en data URI — aucune dépendance réseau, taille compatible imageUrl @db.VarChar(500). */
-function placeholderImage(hue: number): string {
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='800' height='1000'><rect width='800' height='1000' fill='hsl(${hue},45%,55%)'/></svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-}
+/** Dossier local d'images réelles à uploader via UploadThing pour le portfolio des artistes de démo. */
+const IMAGE_DIR = "C:/Users/justi/Desktop/Tout/Projet RNCP/tattoo-images";
+const IMAGE_MIME_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+};
+
+const utapi = new UTApi();
 
 const STYLES = [
   { slug: "fine-line", name: "Fine Line" },
@@ -30,7 +38,6 @@ const ARTISTS = [
     priceMin: 90,
     priceMax: 160,
     styleSlugs: ["fine-line", "geometrique"],
-    hue: 340,
   },
   {
     email: "artiste2.demo@tattoo-pro.fr",
@@ -42,7 +49,6 @@ const ARTISTS = [
     priceMin: 100,
     priceMax: 200,
     styleSlugs: ["old-school", "blackwork"],
-    hue: 20,
   },
   {
     email: "artiste3.demo@tattoo-pro.fr",
@@ -54,9 +60,76 @@ const ARTISTS = [
     priceMin: 120,
     priceMax: 250,
     styleSlugs: ["japonais", "realisme"],
-    hue: 210,
+  },
+  {
+    email: "artiste4.demo@tattoo-pro.fr",
+    name: "Emma Rousseau",
+    artistName: "Emma Rousseau Art",
+    bio: "Géométrique et blackwork épuré, motifs sur-mesure dessinés à la main. Studio à Bordeaux.",
+    city: "Bordeaux",
+    siret: "90123456700045",
+    priceMin: 110,
+    priceMax: 220,
+    styleSlugs: ["geometrique", "blackwork"],
+  },
+  {
+    email: "artiste5.demo@tattoo-pro.fr",
+    name: "Thomas Lefebvre",
+    artistName: "Thomas Lefebvre Tattoo",
+    bio: "Réalisme noir et gris, portraits et animaux. 8 ans d'expérience, studio à Lille.",
+    city: "Lille",
+    siret: "85234567800056",
+    priceMin: 130,
+    priceMax: 280,
+    styleSlugs: ["realisme", "blackwork"],
+  },
+  {
+    email: "artiste6.demo@tattoo-pro.fr",
+    name: "Sofia Martins",
+    artistName: "Sofia Martins Ink",
+    bio: "Fine line délicat et inspirations japonaises, pièces minimalistes. Studio à Toulouse.",
+    city: "Toulouse",
+    siret: "77345678900067",
+    priceMin: 80,
+    priceMax: 150,
+    styleSlugs: ["fine-line", "japonais"],
   },
 ];
+
+function listLocalImages(): string[] {
+  return readdirSync(IMAGE_DIR)
+    .filter((name) => extname(name).toLowerCase() in IMAGE_MIME_TYPES)
+    .sort()
+    .map((name) => join(IMAGE_DIR, name));
+}
+
+/** Répartit les images en `parts` groupes de taille égale (round-robin). */
+function splitEvenly<T>(items: T[], parts: number): T[][] {
+  const groups: T[][] = Array.from({ length: parts }, () => []);
+  items.forEach((item, i) => groups[i % parts].push(item));
+  return groups;
+}
+
+async function uploadImage(filePath: string): Promise<string | null> {
+  const fileName = filePath.split(/[\\/]/).pop()!;
+  const mimeType = IMAGE_MIME_TYPES[extname(fileName).toLowerCase()];
+  const buffer = readFileSync(filePath);
+  const file = new File([buffer], fileName, { type: mimeType });
+
+  const result = await utapi.uploadFiles(file);
+  if (result.error) {
+    console.error(`    ✗ échec upload ${fileName} : ${result.error.message}`);
+    return null;
+  }
+  return result.data.ufsUrl;
+}
+
+async function resetArtists() {
+  const { count } = await prisma.user.deleteMany({ where: { role: "artist" } });
+  console.log(
+    `  ✓ ${count} compte(s) artiste supprimé(s) (cascade : profils, œuvres, réservations, créneaux)`,
+  );
+}
 
 async function ensureUser(email: string, name: string, role: "artist" | "client") {
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -72,7 +145,9 @@ async function ensureUser(email: string, name: string, role: "artist" | "client"
 }
 
 async function seedArtists() {
-  for (const data of ARTISTS) {
+  const imageBatches = splitEvenly(listLocalImages(), ARTISTS.length);
+
+  for (const [index, data] of ARTISTS.entries()) {
     const user = await ensureUser(data.email, data.name, "artist");
 
     const artist = await prisma.tattooArtist.upsert({
@@ -107,25 +182,28 @@ async function seedArtists() {
       });
     }
 
-    const primaryStyle = await prisma.style.findUniqueOrThrow({
-      where: { slug: data.styleSlugs[0] },
-    });
+    const styles = await prisma.style.findMany({ where: { slug: { in: data.styleSlugs } } });
 
-    const existingTattoos = await prisma.tattoo.count({ where: { artistId: artist.id } });
-    if (existingTattoos === 0) {
-      await prisma.tattoo.createMany({
-        data: [0, 1, 2].map((i) => ({
+    let position = 0;
+    for (const filePath of imageBatches[index]) {
+      const imageUrl = await uploadImage(filePath);
+      if (!imageUrl) continue;
+
+      const style = styles[position % styles.length];
+      await prisma.tattoo.create({
+        data: {
           artistId: artist.id,
-          styleId: primaryStyle.id,
-          title: `${data.artistName} — pièce ${i + 1}`,
-          imageUrl: placeholderImage(data.hue + i * 15),
-          position: i,
-          pinned: i === 0,
-        })),
+          styleId: style.id,
+          title: `${data.artistName} — pièce ${position + 1}`,
+          imageUrl,
+          position,
+          pinned: position === 0,
+        },
       });
+      position++;
     }
 
-    console.log(`  ✓ ${data.artistName} (${data.email})`);
+    console.log(`  ✓ ${data.artistName} (${data.email}) — ${position} œuvre(s) uploadée(s)`);
   }
 }
 
@@ -185,6 +263,9 @@ async function seedBookings() {
 }
 
 async function main() {
+  console.log("Réinitialisation des artistes existants…");
+  await resetArtists();
+
   console.log("Styles…");
   for (const style of STYLES) {
     await prisma.style.upsert({
@@ -195,7 +276,7 @@ async function main() {
   }
   console.log(`  ✓ ${STYLES.length} styles`);
 
-  console.log("Artistes…");
+  console.log("Artistes (upload des images réelles vers UploadThing)…");
   await seedArtists();
 
   console.log("Réservations…");
